@@ -35,13 +35,17 @@ def get_first_n_instances_of_props(list_triple_objects, max_num_of_instances_of_
   Function that selects the first n occurrences of a triple that contains the same property.
   Input list_triple_objects: a list of triple objects, each triple should have 3 attributes: DBsubj, DBprop, DBobj.
   Input max_num_of_instances_of_prop_desired: an integer that specifies the maximum number of occurrences of each property in the triple set.
-  Input properties_that_can_happen_once_only; a list of property labels that cannot have 2 or more values, even though they do have more than one on the queried resource.
+  Input properties_that_can_happen_once_only; a list of property labels that cannot have 2 or more values for the same subject, even though they do have more than one on the queried resource.
   Output: a list of ist indices, e.g [0, 1, 2, 3, 4, 5, 6, 8, 9].
-  """
+  """    
+  # Dico to keep track of properties already added for each subject
+  dico_dbSubj_properties = {}
+  # Dico to keep track of how many times each property is found in the triple set
   dico_num_instances_of_prop_found = {}
+
   selected_properties = []
   for i, triple_object in enumerate(list_triple_objects):
-    # For the first instance of a property, create dico entry and add id of triple_object to the list of selected properties
+    # Add property to the list of properties in the triple set and initialise count
     if triple_object.DBprop not in dico_num_instances_of_prop_found.keys():
       dico_num_instances_of_prop_found[triple_object.DBprop] = 1
       selected_properties.append(i)
@@ -49,8 +53,18 @@ def get_first_n_instances_of_props(list_triple_objects, max_num_of_instances_of_
     else:
       dico_num_instances_of_prop_found[triple_object.DBprop] += 1
       if dico_num_instances_of_prop_found[triple_object.DBprop] <= max_num_of_instances_of_prop_desired:
-        if triple_object.DBprop not in properties_that_can_happen_once_only:
+        # Only add a 2nd or 3rd property if (i) that property is not in the list of props that can happen only once, or (ii) if it is in that list but the subject doesn't already have that property in the triple set
+        if (triple_object.DBprop not in properties_that_can_happen_once_only) or (triple_object.DBsubj not in dico_dbSubj_properties.keys()) or (triple_object.DBprop not in dico_dbSubj_properties[triple_object.DBsubj]):
           selected_properties.append(i)
+    
+    # Now that we processed a triple, fill up dico_dbSubj_properties
+    # For the first instance of a property, create dico entry and add id of triple_object to the list of selected properties
+    if triple_object.DBsubj not in dico_dbSubj_properties.keys():
+      dico_dbSubj_properties[triple_object.DBsubj] = []
+    # Add property to the list of properties used for a subject
+    if triple_object.DBprop not in dico_dbSubj_properties[triple_object.DBsubj]:
+      dico_dbSubj_properties[triple_object.DBsubj].append(triple_object.DBprop)
+  # print(dico_dbSubj_properties)
   return selected_properties
 
 def get_prop_index_from_table(selected_properties, list_triple_objects):
