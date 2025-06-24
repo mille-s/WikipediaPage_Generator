@@ -7,8 +7,41 @@ import json
 from xml.dom import minidom
 import re
 import glob
+import xmltodict
+from colored import Fore, Back, Style
 # from google.colab import files
 
+class TripleSet:
+  def __init__(self, triples_list, category, eid, shape, shape_type):
+    self.triples = triples_list
+    self.category = category
+    self.eid = eid
+    self.size = len(triples_list)
+    self.shape = shape
+    self.shape_type = shape_type
+    self.entities_by_frequency = []
+    # The main entity is the one that has the most occurrences as subject or object (if several have the same num of occurrences, "max" returns the first one)
+    entity_counter_dico = {}
+    for triple in self.triples:
+      if triple.DBsubj not in entity_counter_dico.keys():
+        entity_counter_dico[triple.DBsubj] = 1
+      else:
+        entity_counter_dico[triple.DBsubj] += 1
+      if triple.DBobj not in entity_counter_dico.keys():
+        entity_counter_dico[triple.DBobj] = 1
+      else:
+        entity_counter_dico[triple.DBobj] += 1
+    self.entities_by_frequency = sorted(entity_counter_dico, key=entity_counter_dico.get, reverse=True)
+    # print(entity_counter_dico)
+    # print(self.entities_by_frequency)
+
+class Triple_withID:
+  def __init__(self, prop, subj_value, obj_value, triple_id):
+    self.DBprop = prop
+    self.DBsubj = subj_value
+    self.DBobj = obj_value
+    self.id = triple_id
+    
 def clear_files(folder):
   """Function to clear files from a folder."""
   if os.path.exists(folder) and os.path.isdir(folder):
@@ -299,5 +332,190 @@ def concatenate_files_UI(root_folder, morph_output_folder, temp_input_folder_mor
       fo.write(('ERROR! Mismatch with FORGe outputs!\n'))
     print('\nThere are '+str(count_texts_all)+' texts.')
     fo.write('There are '+str(count_texts_all)+' texts.\n')
+
+def balanced_split_with_max(N1, N2):
+  """
+  Function that splits as evenly as possible a number N1 into smaller numbers each as close as possible to another number N2 without being larger than N2.
+  For example, if N1 == 50 and N2 == 20, the output is 17, 17 16.
+  """
+  assert N1 >= N2, "N1 must be greater than or equal to N2"
+  assert N2 >= 1, "N1 must be at least 1"
+  # Start with the minimal number of parts needed to respect the max constraint
+  for k in range(N1 // N2, N1 + 1):
+    # print(f'k: {k}')
+    base = N1 // k
+    remainder = N1 % k
+    # print(f'N1//N2, N1+1: {N1//N2}, {N1+1}')
+    # print(f'base: {base}')
+    # print(f'remainder: {remainder}')
+    # print()
+    # The largest part will be base + 1 (if remainder > 0)
+    if base + (1 if remainder > 0 else 0) <= N2:
+      result = [base + 1] * remainder + [base] * (k - remainder)
+      return result
+
+def extract_info_from_WebNLG_XML (path_input_XML):
+  """
+  path_input_XML: Path to an XML file that contains triple sets, e.g. as provided in the WebNLG shared tasks.
+  returns a list of TripleSet objects. Each object contains as attributes: triples (a list of Triple objects), category, eid, size, shape, main_entity
+  """
+  with codecs.open(path_input_XML, 'r', 'utf-8') as file:
+    XML_file = file.read()
+    XML_dict = xmltodict.parse(XML_file)
+    print(f'    Reading file {path_input_XML}..')
+    print(f"      There are {len(XML_dict['benchmark']['entries']['entry'])} inputs in the original XML file.")
+    # triple_sets_list will be a list of objects of class TripleSet
+    total_number_of_triples = 0
+    triple_sets_list = []
+    for entry in XML_dict['benchmark']['entries']['entry']:
+      category = entry['@category']
+      eid = entry['@eid']
+      size = entry['@size']
+      shape = entry['@shape']
+      shape_type = entry['@shape-type']
+      # mtriples_list will be a list of objects of class Triple
+      mtriples_list = []
+      # Get modified triples
+      if isinstance(entry['modifiedtripleset']['mtriple'], list):
+        for triple_id, mtriple in enumerate(entry['modifiedtripleset']['mtriple']):
+          triple_object = Triple_withID(mtriple.split(' | ')[1], mtriple.split(' | ')[0], mtriple.split(' | ')[2], triple_id)
+          mtriples_list.append(triple_object)
+      else:
+        mtriples_list.append(entry['modifiedtripleset']['mtriple'])
+      assert int(size) == len(mtriples_list), f'Error: found size {size} but found {len(mtriples_list)} triples.'
+      total_number_of_triples += len(mtriples_list)
+      # Create object of class TripleSet
+      tripleSet_object = TripleSet(mtriples_list, category, eid, shape, shape_type)
+      triple_sets_list.append(tripleSet_object)
+
+    print(f"      There are {total_number_of_triples} input triples in the original XML file.")
+
+  return triple_sets_list
+
+def sort_WebNLG_XMLs (path_input_XML, path_DBprops_count):
+  """
+  path_input_XML: Path to an XML file that contains triple sets, e.g. as provided in the WebNLG shared tasks. The code expects that all triples mention the same entity, as subject or object.
+  path_DBprops_count: Path to a json file that contains DBpedia properties as keys (e.g. "http://dbpedia.org/ontology/birthPlace") and number of occurrences on DBpedia as values (e.g 1486579).
+  This function returns a list of TripleSets objects. TripleSet.triples contains Triple objects; in each triple set, Triple objects are sorted by "importance" (i.e. sorted by frequency of entity in the triple set, and by frequency of property on DBpedia)
+  """
+  print('  Sorting triples sets by frequency of entity in the triple set, and by frequency of respective properties on DBpedia...')
+  dico_count_occurrences_dbp_props = json.loads(codecs.open(path_DBprops_count, 'r', 'utf-8').read())
+  triple_sets_list = extract_info_from_WebNLG_XML (path_input_XML)
+  new_triple_set_Objects_list = []
+  total_number_of_triples = 0
+  for triple_set in triple_sets_list:
+    # print(triple_set.eid, triple_set.category, triple_set.size, triple_set.entities_by_frequency[0])
+    # Make a list where we will store the order of the triples using their index in the triple_set list
+    # E.g. list_triple_indices = [0, 4, 5, 2, 3, 1]
+    list_triple_indices = []
+    # Process entities by their respective importance in the triple set, so the most frequently found entity will go first, the second most frequently found will go second, and so on.
+    for entity_name in triple_set.entities_by_frequency:
+      # print(f'  {entity_name}')
+      # Make a list of property labels with the http://dbpedia.org/ontology/ prefix, one with the properties where the entity is subject, and one with the properties where the entity is object
+      # The properties in the ..._Subj list will go first, the properties in the ..._Obj list will go after. 
+      list_dico_count_occurrences_dbp_props_keys_Subj = [[f'http://dbpedia.org/ontology/{triple.DBprop}', triple.id] for triple in triple_set.triples if triple.DBsubj == entity_name]
+      list_dico_count_occurrences_dbp_props_keys_Obj = [[f'http://dbpedia.org/ontology/{triple.DBprop}', triple.id] for triple in triple_set.triples if triple.DBobj == entity_name]
+      # Order that list according to the count in path_DBprops_count
+      sorted_list_dico_count_occurrences_dbp_props_keys_Subj = sorted(list_dico_count_occurrences_dbp_props_keys_Subj, key=lambda x: dico_count_occurrences_dbp_props[x[0]], reverse=True)
+      sorted_list_dico_count_occurrences_dbp_props_keys_Obj = sorted(list_dico_count_occurrences_dbp_props_keys_Obj, key=lambda x: dico_count_occurrences_dbp_props[x[0]], reverse=True)
+      # print(f'    {sorted_list_dico_count_occurrences_dbp_props_keys_Subj}')
+      # print(f'    {sorted_list_dico_count_occurrences_dbp_props_keys_Obj}')
+      # Now put all the triple indices for the current entity in list_triple_indices, starting with the triples in which the entity is subject
+      for list_triple_indices_Subj in sorted_list_dico_count_occurrences_dbp_props_keys_Subj:
+        # To avoid duplicated triples:
+        if list_triple_indices_Subj[1] not in list_triple_indices:
+          list_triple_indices.append(list_triple_indices_Subj[1])
+      for list_triple_indices_Obj in sorted_list_dico_count_occurrences_dbp_props_keys_Obj:
+        if list_triple_indices_Obj[1] not in list_triple_indices:
+          list_triple_indices.append(list_triple_indices_Obj[1])
+
+    #Now add the triples in a list, ordering the triples as defined in list_triple_indices (the create_xml function expects the triples ordered already)
+    new_triples_list = [triple_set.triples[i] for i in list_triple_indices]
+    assert len(new_triples_list) == len(triple_set.triples), f'Expected {len(triple_set.triples)} triples, found {len(new_triples_list)}'
+    total_number_of_triples += len(new_triples_list)
+    # print(len(new_triples_list), [new_triples_list[x].id for x in range(len(new_triples_list))])
+    new_triple_set_Objects_list.append(TripleSet(new_triples_list, triple_set.category, triple_set.eid, triple_set.shape, triple_set.shape_type))
+  assert len(new_triple_set_Objects_list) == len(triple_sets_list), f'Expected {len(triple_sets_list)} triple sets, found {len(new_triple_set_Objects_list)}'
+  print(f'    There are {len(new_triple_set_Objects_list)} sorted triple sets...')
+  print(f'    There are {total_number_of_triples} input triples in the sorted XML file.')
+
+  return new_triple_set_Objects_list
+
+def split_XMLs (path_input_XML, path_DBprops_count, max_num_triples, path_save_XMLs, DEBUG = False):
+  """
+  path_input_XML: Path to an XML file that contains triple sets, e.g. as provided in the WebNLG shared tasks. The code expects that all triples mention the same entity, as subject or object.
+  path_DBprops_count: Path to a json file that contains DBpedia properties as keys (e.g. "http://dbpedia.org/ontology/birthPlace") and number of occurrences on DBpedia as values (e.g 1486579).
+  max_num_triples: the maximum number of triples desired in an XML
+  path_save_XMLs: the path where the output XMLs should be created
+  This function creates individual XML files for each split triple set.
+  """
+  print('Splitting XML file...')
+  clear_folder(path_save_XMLs)
+  os.makedirs(path_save_XMLs)
+  # Get the list of TripleSet objects with the triples re-ordered. The object contains the following:
+  # self.triples, self.category, self.eid, self.size, self.shape, self.shape_type, self.entities_by_frequency
+  new_triple_set_Objects_list = sort_WebNLG_XMLs(path_input_XML, path_DBprops_count)
+  total_number_of_XMLs = 0
+  total_number_of_triples = 0
+  for new_triple_set in new_triple_set_Objects_list:
+    if DEBUG:
+      print(new_triple_set.size, new_triple_set.entities_by_frequency[0])
+    # Get "ideal" triple set split (see balanced_split_with_max function)
+    even_slices = None
+    if new_triple_set.size > max_num_triples:
+      # balanced_split_with_max returns a sequence of numbers that stand for a number of properties.
+      groups = balanced_split_with_max(new_triple_set.size, max_num_triples)
+      # Let's convert that to a sequence of numbers that correspond to list slices: [10, 10, 5] becomes [10, 20, 25]
+      even_slices = [sum(groups[:i]) for i in range(len(groups)+1)]
+    else:
+      even_slices = [0] + [new_triple_set.size]
+    if DEBUG:
+      print(f'  Before: {even_slices}')
+
+    # Initialise new list
+    new_slices = [0]
+    # Now we need to check if the split happened between two occurrences of the same property, which we'd like to avoid
+    # even_slices has at least 2 numbers, 0 and the end of the first or only slice.
+    if len(even_slices) > 2:
+      # Check for intermediate group boundaries (i.e. exclude the first boundary, which is 0, and the last one, because there is no property after it)
+      for boundary in even_slices[1:-1]:
+        previous_same_property = 0
+        # Since in the way even_slices is built, the last slices are the smallest ones, it's better to move boundaries to the left.
+        while new_triple_set.triples[boundary+previous_same_property].DBprop == new_triple_set.triples[boundary+previous_same_property-1].DBprop:
+          previous_same_property -= 1
+        if previous_same_property < 0:
+          new_slices.append(boundary+previous_same_property)
+          if DEBUG:
+            print(f'  {Fore.red}{Back.yellow}!!! Changed split {boundary}, {previous_same_property}!{Style.reset}')
+        else:
+          new_slices.append(boundary)
+      # Add last boundary
+      new_slices.append(even_slices[-1])
+    else:
+      # Add second and last boundary
+      new_slices.append(even_slices[1])
+    if DEBUG:
+      print(f'  After: {new_slices}')
+
+    # Create XMLs
+    # Set parameters for calling function that creates XMLs
+    input_category = new_triple_set.category
+    folder_name = input_category+'_max'+str(max_num_triples)
+    entity_name = new_triple_set.entities_by_frequency[0]
+    eid = new_triple_set.eid
+    # Clear/Create output folder
+    if not os.path.exists(os.path.join(path_save_XMLs, folder_name)):
+      os.makedirs(os.path.join(path_save_XMLs, folder_name))
+
+    # For each slice of the triple set, create an XML file
+    count_files_created = 0
+    for count_files, i in enumerate(range(len(new_slices)-1)):
+      list_triple_objects = new_triple_set.triples[new_slices[i]:new_slices[i+1]]
+      properties_selected_by_user = [i for i in range(len(list_triple_objects))] # Use all properties
+      unique_entity_name = entity_name+'_'+str(count_files)
+      list_triples_text = create_xml(list_triple_objects, properties_selected_by_user, input_category, os.path.join(path_save_XMLs, folder_name), entity_name=unique_entity_name, eid = eid)  
+      count_files_created += 1
+      total_number_of_triples += len(list_triple_objects)
+    total_number_of_XMLs += count_files_created
 
   return filename
