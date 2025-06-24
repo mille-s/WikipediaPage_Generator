@@ -333,6 +333,8 @@ def concatenate_files_UI(root_folder, morph_output_folder, temp_input_folder_mor
     print('\nThere are '+str(count_texts_all)+' texts.')
     fo.write('There are '+str(count_texts_all)+' texts.\n')
 
+  return filename
+
 def balanced_split_with_max(N1, N2):
   """
   Function that splits as evenly as possible a number N1 into smaller numbers each as close as possible to another number N2 without being larger than N2.
@@ -517,5 +519,3 @@ def split_XMLs (path_input_XML, path_DBprops_count, max_num_triples, path_save_X
       count_files_created += 1
       total_number_of_triples += len(list_triple_objects)
     total_number_of_XMLs += count_files_created
-
-  return filename
