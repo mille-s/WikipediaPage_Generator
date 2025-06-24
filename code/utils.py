@@ -365,25 +365,48 @@ def extract_info_from_WebNLG_XML (path_input_XML):
     XML_file = file.read()
     XML_dict = xmltodict.parse(XML_file)
     print(f'    Reading file {path_input_XML}..')
-    print(f"      There are {len(XML_dict['benchmark']['entries']['entry'])} inputs in the original XML file.")
     # triple_sets_list will be a list of objects of class TripleSet
     total_number_of_triples = 0
-    triple_sets_list = []
-    for entry in XML_dict['benchmark']['entries']['entry']:
-      category = entry['@category']
-      eid = entry['@eid']
-      size = entry['@size']
-      shape = entry['@shape']
-      shape_type = entry['@shape-type']
+    triple_sets_list = []    
+    if isinstance(XML_dict['benchmark']['entries']['entry'], list):
+      print(f"      There are {len(XML_dict['benchmark']['entries']['entry'])} inputs in the original XML file.")
+      for entry in XML_dict['benchmark']['entries']['entry']:
+        category = entry['@category']
+        eid = entry['@eid']
+        size = entry['@size']
+        shape = entry['@shape']
+        shape_type = entry['@shape-type']
+        # mtriples_list will be a list of objects of class Triple
+        mtriples_list = []
+        # Get modified triples
+        if isinstance(entry['modifiedtripleset']['mtriple'], list):
+          for triple_id, mtriple in enumerate(entry['modifiedtripleset']['mtriple']):
+            triple_object = Triple_withID(mtriple.split(' | ')[1], mtriple.split(' | ')[0], mtriple.split(' | ')[2], triple_id)
+            mtriples_list.append(triple_object)
+        else:
+          mtriples_list.append(entry['modifiedtripleset']['mtriple'])
+        assert int(size) == len(mtriples_list), f'Error: found size {size} but found {len(mtriples_list)} triples.'
+        total_number_of_triples += len(mtriples_list)
+        # Create object of class TripleSet
+        tripleSet_object = TripleSet(mtriples_list, category, eid, shape, shape_type)
+        triple_sets_list.append(tripleSet_object)
+    else:
+      print(f"      There is 1 input in the original XML file.")
+      category = XML_dict['benchmark']['entries']['entry']['@category']
+      eid = XML_dict['benchmark']['entries']['entry']['@eid']
+      size = XML_dict['benchmark']['entries']['entry']['@size']
+      shape = XML_dict['benchmark']['entries']['entry']['@shape']
+      shape_type = XML_dict['benchmark']['entries']['entry']['@shape-type']
+      # Block repeated from above
       # mtriples_list will be a list of objects of class Triple
       mtriples_list = []
       # Get modified triples
-      if isinstance(entry['modifiedtripleset']['mtriple'], list):
-        for triple_id, mtriple in enumerate(entry['modifiedtripleset']['mtriple']):
+      if isinstance(XML_dict['benchmark']['entries']['entry']['modifiedtripleset']['mtriple'], list):
+        for triple_id, mtriple in enumerate(XML_dict['benchmark']['entries']['entry']['modifiedtripleset']['mtriple']):
           triple_object = Triple_withID(mtriple.split(' | ')[1], mtriple.split(' | ')[0], mtriple.split(' | ')[2], triple_id)
           mtriples_list.append(triple_object)
       else:
-        mtriples_list.append(entry['modifiedtripleset']['mtriple'])
+        mtriples_list.append(XML_dict['benchmark']['entries']['entry']['modifiedtripleset']['mtriple'])
       assert int(size) == len(mtriples_list), f'Error: found size {size} but found {len(mtriples_list)} triples.'
       total_number_of_triples += len(mtriples_list)
       # Create object of class TripleSet
