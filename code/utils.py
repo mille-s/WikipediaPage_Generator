@@ -519,3 +519,6 @@ def split_XMLs (path_input_XML, path_DBprops_count, max_num_triples, path_save_X
       count_files_created += 1
       total_number_of_triples += len(list_triple_objects)
     total_number_of_XMLs += count_files_created
+
+  print(f'  Created {total_number_of_XMLs} split XML files of approximate size {max_num_triples}.')
+  print(f'  There are {total_number_of_triples} input triples in the split XML files.')
