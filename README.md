@@ -1,5 +1,7 @@
 # WikipediaPage_Generator
 
+A live demo for Irish and English is available [here](http://ec2-18-224-151-90.us-east-2.compute.amazonaws.com:3000/).
+
 **Important notice#1**: this tool is still at an early stage of development; it can generate text that is unnatural, and sometimes ungrammatical. 
 
 The tool is intended to generate seed Wikipedia pages in several languages for people to edit, and possibly upload on Wikipedia. Our generator is fully rule-based and open-source; its general quality is lower than that of the best large language models, but unlike them, it is extremely data and resource efficient. If you like rule-based NLG systems, you may want to check [this one](https://arxiv.org/ftp/arxiv/papers/2311/2311.14808.pdf) too.
