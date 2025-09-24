@@ -1,12 +1,12 @@
 # WikipediaPage_Generator
 
-A live demo for Irish and English is available [here](http://ec2-18-224-151-90.us-east-2.compute.amazonaws.com:3000/).
+A live demo with user-friendly interface and  more models is available [here](http://ec2-18-224-151-90.us-east-2.compute.amazonaws.com:3000/) (Irish and English).
 
 **Important notice#1**: this tool is still at an early stage of development; it can generate text that is unnatural, and sometimes ungrammatical. 
 
 The tool is intended to generate seed Wikipedia pages in several languages for people to edit, and possibly upload on Wikipedia. Our generator is fully rule-based and open-source; its general quality is lower than that of the best large language models, but unlike them, it is extremely data and resource efficient. If you like rule-based NLG systems, you may want to check [this one](https://arxiv.org/ftp/arxiv/papers/2311/2311.14808.pdf) too.
 
-## Quick start
+## Quick start for the code in this repository (link to user interface above)
 
 1. Click on *Wikipedia_generator.ipynb* above and then click on *Open in Colab* at the top of the next page.
 2. In Colab, run cell of Step 1 to download the resources needed (click the play button just below *Step 1*); it takes a couple of minutes to install.
@@ -46,9 +46,11 @@ The code essentially outputs 2 files, which can be downloaded from the file brow
 
 ## References
 
+Simon Mille, Pronesti M, Thomson C, Lorandi M, Fitzpatrick S, Huidrom R, Sabry M, O’Riordan A, Belz A. Filling gaps in wikipedia: Leveraging data-to-text generation to improve encyclopedic coverage of underrepresented groups. In Proceedings of the 17th International Natural Language Generation Conference: System Demonstrations 2024 Sep (pp. 16-19). [Paper PDF](https://aclanthology.org/2024.inlg-demos.6/). **Best demo award at INLG 2024 in Tokyo, Japan! Best poster award at IVI 2025 in Maynooth, Ireland!**
+
 Simon Mille, Elaine Uí Dhonnchadha, Lauren Cassidy, Brian Davis, Stamatia Dasiopoulou, Anya Belz. 2023. Generating Irish Text with a Flexible Plug-and-Play Architecture. In *Proceedings of the Second Workshop on Pattern-based Approaches to NLP in the Age of Deep Learning (Pan-DL'23@EMNLP)*, pages 25--42, Singapore. [Paper PDF](https://aclanthology.org/2023.pandl-1.4)
 
-Simon Mille, Elaine Uí Dhonnchadha, Stamatia Dasiopoulou, Lauren Cassidy, Brian Davis, Anya Belz. 2023. DCU/TCD-FORGe at WebNLG’23: Irish rules!. In *Proceedings of the Workshop on Multimodal, Multilingual Natural Language Generation and Multilingual WebNLG Challenge (MM-NLG@INLG)*, pages 87--92, Prague, Czech Republic. [Paper PDF](https://aclanthology.org/2023.mmnlg-1.10)
+Simon Mille, Elaine Uí Dhonnchadha, Stamatia Dasiopoulou, Lauren Cassidy, Brian Davis, Anya Belz. 2023. DCU/TCD-FORGe at WebNLG’23: Irish rules!. In *Proceedings of the Workshop on Multimodal, Multilingual Natural Language Generation and Multilingual WebNLG Challenge (MM-NLG@INLG)*, pages 87--92, Prague, Czech Republic. [Paper PDF](https://aclanthology.org/2023.mmnlg-1.10) **Runner-up system behind GPT on Irish text generation!**
 
 ## Acknowledgements
 The project was funded by the European Union under the Marie Skłodowska-Curie grant agreement No 101062572 (M-FleNS).
