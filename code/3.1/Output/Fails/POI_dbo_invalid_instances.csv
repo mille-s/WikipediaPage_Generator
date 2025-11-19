@@ -1,0 +1,39 @@
+page_name,property,target_resource,direction,expected_ranges,actual_types
+"Anne,_Princess_Royal",child,Peter_Phillips,outgoing,http://dbpedia.org/ontology/Person,http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+"Anne,_Princess_Royal",child,Zara_Tindall,outgoing,http://dbpedia.org/ontology/Person,http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+"Anne,_Princess_Royal",starring,"Anne,_Princess_Royal",incoming,http://dbpedia.org/ontology/Actor,http://dbpedia.org/ontology/Person; http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Douglas_Hyde,almaMater,Trinity_College_Dublin,outgoing,http://dbpedia.org/ontology/EducationalInstitution,http://dbpedia.org/ontology/Agent; http://dbpedia.org/ontology/Non-ProfitOrganisation; http://dbpedia.org/ontology/Organisation
+Douglas_Hyde,deathPlace,Ratra_House,outgoing,http://dbpedia.org/ontology/Place,http://dbpedia.org/ontology/ArchitecturalStructure; http://dbpedia.org/ontology/Building
+Douglas_Hyde,nationality,Irish_people,outgoing,http://dbpedia.org/ontology/Country,
+Douglas_Hyde,party,Independent_politician_(Ireland),outgoing,http://dbpedia.org/ontology/PoliticalParty,
+Douglas_Hyde,spouse,Lucy_Kurtz,outgoing,http://dbpedia.org/ontology/Person,http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Douglas_Hyde,foundedBy,Douglas_Hyde,incoming,http://dbpedia.org/ontology/Agent,http://dbpedia.org/ontology/Person; http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Douglas_Hyde,foundedBy,Douglas_Hyde,incoming,http://dbpedia.org/ontology/Agent,http://dbpedia.org/ontology/Person; http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Douglas_Hyde,foundedBy,Douglas_Hyde,incoming,http://dbpedia.org/ontology/Agent,http://dbpedia.org/ontology/Person; http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Mary_McAleese,birthPlace,Northern_Ireland,outgoing,http://dbpedia.org/ontology/Place,
+Mary_McAleese,party,Fianna_Fáil,outgoing,http://dbpedia.org/ontology/PoliticalParty,http://dbpedia.org/ontology/Agent; http://dbpedia.org/ontology/Organisation
+Mary_McAleese,party,Independent_politician_(Ireland),outgoing,http://dbpedia.org/ontology/PoliticalParty,
+Mary_Robinson,award,Calderone_Prize,outgoing,http://dbpedia.org/ontology/Award,
+Mary_Robinson,award,Kew_International_Medal,outgoing,http://dbpedia.org/ontology/Award,
+Mary_Robinson,award,Knight_of_Freedom_Award,outgoing,http://dbpedia.org/ontology/Award,
+Mary_Robinson,award,Otto_Hahn_Peace_Medal,outgoing,http://dbpedia.org/ontology/Award,
+Mary_Robinson,award,Presidential_Medal_of_Freedom,outgoing,http://dbpedia.org/ontology/Award,
+Mary_Robinson,award,Princess_of_Asturias_Awards,outgoing,http://dbpedia.org/ontology/Award,
+Mary_Robinson,award,Tang_Prize,outgoing,http://dbpedia.org/ontology/Award,
+Mary_Robinson,party,Independent_politician_(Ireland),outgoing,http://dbpedia.org/ontology/PoliticalParty,
+Mary_Robinson,party,Labour_Party_(Ireland),outgoing,http://dbpedia.org/ontology/PoliticalParty,http://dbpedia.org/ontology/Agent; http://dbpedia.org/ontology/Organisation
+Mary_Robinson,spouse,Nicholas_Robinson_(historian),outgoing,http://dbpedia.org/ontology/Person,http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Mary_Robinson,foundedBy,Mary_Robinson,incoming,http://dbpedia.org/ontology/Agent,http://dbpedia.org/ontology/Person; http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Mary_Robinson,foundedBy,Mary_Robinson,incoming,http://dbpedia.org/ontology/Agent,http://dbpedia.org/ontology/Person; http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Mary_Robinson,notableWork,Mary_Robinson,incoming,http://dbpedia.org/ontology/Work,http://dbpedia.org/ontology/Person; http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Michael_D._Higgins,party,Independent_politician,outgoing,http://dbpedia.org/ontology/PoliticalParty,
+Michael_D._Higgins,residence,Áras_an_Uachtaráin,outgoing,http://dbpedia.org/ontology/Place,http://dbpedia.org/ontology/ArchitecturalStructure
+Patrick_Hillery,almaMater,University_College_Dublin,outgoing,http://dbpedia.org/ontology/EducationalInstitution,http://dbpedia.org/ontology/Agent; http://dbpedia.org/ontology/Organisation
+Patrick_Hillery,party,Fianna_Fáil,outgoing,http://dbpedia.org/ontology/PoliticalParty,http://dbpedia.org/ontology/Agent; http://dbpedia.org/ontology/Organisation
+Patrick_Hillery,spouse,Maeve_Hillery,outgoing,http://dbpedia.org/ontology/Person,http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Éamon_de_Valera,almaMater,Trinity_College_Dublin,outgoing,http://dbpedia.org/ontology/EducationalInstitution,http://dbpedia.org/ontology/Agent; http://dbpedia.org/ontology/Non-ProfitOrganisation; http://dbpedia.org/ontology/Organisation
+Éamon_de_Valera,mother,Catherine_Coll,outgoing,http://dbpedia.org/ontology/Person,http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Éamon_de_Valera,nationality,Birthright_citizenship_in_the_United_States,outgoing,http://dbpedia.org/ontology/Country,
+Éamon_de_Valera,party,Fianna_Fáil,outgoing,http://dbpedia.org/ontology/PoliticalParty,http://dbpedia.org/ontology/Agent; http://dbpedia.org/ontology/Organisation
+Éamon_de_Valera,spouse,Sinéad_de_Valera,outgoing,http://dbpedia.org/ontology/Person,http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Éamon_de_Valera,foundedBy,Éamon_de_Valera,incoming,http://dbpedia.org/ontology/Agent,http://dbpedia.org/ontology/Person; http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species

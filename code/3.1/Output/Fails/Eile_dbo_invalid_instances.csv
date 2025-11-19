@@ -1,0 +1,7 @@
+page_name,property,target_resource,direction,expected_ranges,actual_types
+Éamon de Valera,almaMater,Trinity_College_Dublin,outgoing,http://dbpedia.org/ontology/EducationalInstitution,http://dbpedia.org/ontology/Agent; http://dbpedia.org/ontology/Non-ProfitOrganisation; http://dbpedia.org/ontology/Organisation
+Éamon de Valera,mother,Catherine_Coll,outgoing,http://dbpedia.org/ontology/Person,http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Éamon de Valera,nationality,Birthright_citizenship_in_the_United_States,outgoing,http://dbpedia.org/ontology/Country,
+Éamon de Valera,party,Fianna_Fáil,outgoing,http://dbpedia.org/ontology/PoliticalParty,http://dbpedia.org/ontology/Agent; http://dbpedia.org/ontology/Organisation
+Éamon de Valera,spouse,Sinéad_de_Valera,outgoing,http://dbpedia.org/ontology/Person,http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
+Éamon de Valera,foundedBy,Éamon de Valera,incoming,http://dbpedia.org/ontology/Agent,http://dbpedia.org/ontology/Person; http://dbpedia.org/ontology/Animal; http://dbpedia.org/ontology/Eukaryote; http://dbpedia.org/ontology/Species
