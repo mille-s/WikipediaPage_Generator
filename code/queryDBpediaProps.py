@@ -24,7 +24,9 @@ class Triple:
     self.DBsubj = subj_value
     self.DBobj = obj_value
 
-def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj'):
+# Make a class CheckedTriple (extends Triple) adds: expected, acutal, domain, range
+
+def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', tripleValidation=False):
   # Process and print the results
   list_triple_objects = []
   for result in results:
@@ -68,8 +70,12 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
         # print(f'TEST prop_name: {prop_name}')
         if prop_name in list_properties and not prop_name in ignore_properties_list:
           # print(f"{prop_name}: {obj_name}")
-          triple_object = Triple(prop_name, subj_name_final, obj_name_final)
-          list_triple_objects.append(triple_object)
+          if tripleValidation == False:
+            triple_object = Triple(prop_name, subj_name_final, obj_name_final)
+            list_triple_objects.append(triple_object)
+          else:
+            # To be implemented - get expected and actual values for domain and range.
+            pass
   return list_triple_objects
 
 def get_properties_of_entity(uri, look_for_entity_as_sbjORobj):
@@ -213,9 +219,9 @@ def get_dbpedia_properties(props_list_path, entity_name, triple_source, ignore_p
   # Get properties covered by the generator and their respective objets
   list_triple_objects = []
   if get_triples_where_entity_is_subj == True:
-    list_triple_objects.extend(get_triples_seen(results_subj, subj_name, triple_source, list_properties, ignore_properties_list, entity_is_sbjORobj = 'Subj'))
+    list_triple_objects.extend(get_triples_seen(results_subj, subj_name, triple_source, list_properties, ignore_properties_list, entity_is_sbjORobj = 'Subj', tripleValidation=False))
   if get_triples_where_entity_is_obj == True:
-    list_triple_objects.extend(get_triples_seen(results_obj, subj_name, triple_source, list_properties, ignore_properties_list, entity_is_sbjORobj = 'Obj'))
+    list_triple_objects.extend(get_triples_seen(results_obj, subj_name, triple_source, list_properties, ignore_properties_list, entity_is_sbjORobj = 'Obj', tripleValidation=False))
 
   # Check
   # print('Subject: '+subj_name)

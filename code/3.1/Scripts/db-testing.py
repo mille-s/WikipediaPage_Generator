@@ -5,9 +5,9 @@ from datetime import datetime
 
 DATA_TYPE = "dbo"  # <-- Change to either "dbo" or "dbp"
 SECTION = "Eile"  # <-- Change this to switch sections
-#PARAMETER = "president" # <-- Change this to filter by incoming property
+PARAMETER = "" # <-- Change this to filter by incoming property
 
-FOLDER = "Testing/3.1" # <-- Current folder
+FOLDER = "code/3.1" # <-- Current folder
 
 def is_yyyy_mm_dd(text: str) -> bool:
     try:
