@@ -24,16 +24,15 @@ class Triple:
     self.DBsubj = subj_value
     self.DBobj = obj_value
 
-# Make a class CheckedTriple (extends Triple) adds: expected, acutal, domain, range
 class CheckedTriple(Triple):
-  def __init__(self, prop, subj_value, obj_value, expected, actual, domain, range):
+  def __init__(self, prop, subj_value, obj_value, expected_ranges, actual_ranges=[], expected_domain=[], actual_domain=[]):
     super().__init__(prop, subj_value, obj_value)
-    self.expected = expected
-    self.actual = actual
-    self.domain = domain
-    self.range = range
+    self.expected_ranges = expected_ranges
+    self.actual_ranges = actual_ranges
+    self.expected_domain = expected_domain
+    self.actual_domain = actual_domain
 
-def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', tripleValidation=False):
+def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', triple_validation = False):
   # Process and print the results
   list_triple_objects = []
   for result in results:
@@ -77,13 +76,50 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
         # print(f'TEST prop_name: {prop_name}')
         if prop_name in list_properties and not prop_name in ignore_properties_list:
           # print(f"{prop_name}: {obj_name}")
-          if tripleValidation == False:
+          if triple_validation == False:
             triple_object = Triple(prop_name, subj_name_final, obj_name_final)
             list_triple_objects.append(triple_object)
           else:
-            # To be implemented - get expected and actual values for domain and range.
-            pass
+            expected_ranges = get_dbo_property_ranges(prop_name)
+            actual_ranges = get_resource_types(obj_name_final)
+            triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges)
+            list_triple_objects.append(triple_object)
   return list_triple_objects
+
+def get_resource_types(resource_name):
+  """
+  Returns all rdf:type values under dbo: namespace for a resource.
+  """
+  query = f"""
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  SELECT DISTINCT ?type WHERE {{
+      <http://dbpedia.org/resource/{resource_name}> rdf:type ?type .
+      FILTER(STRSTARTS(STR(?type), "http://dbpedia.org/ontology/"))
+  }}
+  """
+  return [r["type"]["value"] for r in sql_query(query)]
+
+def get_dbo_property_ranges(prop):
+  """Fetches rdfs:range for dbo:property."""
+  query = f"""
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX dbo: <http://dbpedia.org/ontology/>
+  SELECT DISTINCT ?range WHERE {{ dbo:{prop} rdfs:range ?range . }}
+  """
+  return [r["range"]["value"] for r in sql_query(query)]
+
+def sql_query(query_string):
+  """
+  Executes SPARQL query with safe fallback.
+  Returns JSON results list.
+  """
+  try:
+      sparql = SPARQLWrapper("http://dbpedia.org/sparql")
+      sparql.setReturnFormat(JSON)
+      sparql.setQuery(query_string)
+      return sparql.query().convert()["results"]["bindings"]
+  except:
+      return []
 
 def get_properties_of_entity(uri, look_for_entity_as_sbjORobj):
   # Define the DBpedia SPARQL endpoint URL
@@ -189,7 +225,7 @@ def get_wikidata_properties_of_entity(wikidata_id, look_for_entity_as_sbjORobj):
   #   ignore_properties_str = sys.argv[4]
   #   out_folder = sys.argv[5]
 
-def get_dbpedia_properties(props_list_path, entity_name, triple_source, ignore_properties_str, get_triples_where_entity_is_subj = True, get_triples_where_entity_is_obj = False):
+def get_dbpedia_properties(props_list_path, entity_name, triple_source, ignore_properties_str, get_triples_where_entity_is_subj = True, get_triples_where_entity_is_obj = False, triple_Validation = False):
   ignore_properties_input = ignore_properties_str.split(',')
   ignore_properties_list = []
   for ignored_property in ignore_properties_input:
@@ -225,10 +261,16 @@ def get_dbpedia_properties(props_list_path, entity_name, triple_source, ignore_p
       
   # Get properties covered by the generator and their respective objets
   list_triple_objects = []
-  if get_triples_where_entity_is_subj == True:
-    list_triple_objects.extend(get_triples_seen(results_subj, subj_name, triple_source, list_properties, ignore_properties_list, entity_is_sbjORobj = 'Subj', tripleValidation=False))
-  if get_triples_where_entity_is_obj == True:
-    list_triple_objects.extend(get_triples_seen(results_obj, subj_name, triple_source, list_properties, ignore_properties_list, entity_is_sbjORobj = 'Obj', tripleValidation=False))
+  if triple_Validation == True:
+    if get_triples_where_entity_is_subj == True:
+      list_triple_objects.extend(get_triples_seen(results_subj, subj_name, triple_source, list_properties, ignore_properties_list, entity_is_sbjORobj = 'Subj', triple_validation=True))
+    if get_triples_where_entity_is_obj == True:
+      list_triple_objects.extend(get_triples_seen(results_obj, subj_name, triple_source, list_properties, ignore_properties_list, entity_is_sbjORobj = 'Obj', triple_validation=True))
+  else:
+    if get_triples_where_entity_is_subj == True:
+      list_triple_objects.extend(get_triples_seen(results_subj, subj_name, triple_source, list_properties, ignore_properties_list, entity_is_sbjORobj = 'Subj', triple_validation=False))
+    if get_triples_where_entity_is_obj == True:
+      list_triple_objects.extend(get_triples_seen(results_obj, subj_name, triple_source, list_properties, ignore_properties_list, entity_is_sbjORobj = 'Obj', triple_validation=False))
 
   # Check
   # print('Subject: '+subj_name)
