@@ -25,6 +25,13 @@ class Triple:
     self.DBobj = obj_value
 
 # Make a class CheckedTriple (extends Triple) adds: expected, acutal, domain, range
+class CheckedTriple(Triple):
+  def __init__(self, prop, subj_value, obj_value, expected, actual, domain, range):
+    super().__init__(prop, subj_value, obj_value)
+    self.expected = expected
+    self.actual = actual
+    self.domain = domain
+    self.range = range
 
 def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', tripleValidation=False):
   # Process and print the results
