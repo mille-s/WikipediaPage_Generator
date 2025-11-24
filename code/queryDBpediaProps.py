@@ -80,9 +80,11 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             triple_object = Triple(prop_name, subj_name_final, obj_name_final)
             list_triple_objects.append(triple_object)
           else:
-            expected_ranges = get_dbo_property_ranges(prop_name)
+            expected_ranges = get_dbo_property_range_or_domain(prop_name, 'range')
             actual_ranges = get_resource_types(obj_name_final)
-            triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges)
+            expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain')
+            actual_domain = get_resource_types(subj_name_final)
+            triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges, expected_domain, actual_domain)
             list_triple_objects.append(triple_object)
   return list_triple_objects
 
@@ -97,16 +99,42 @@ def get_resource_types(resource_name):
       FILTER(STRSTARTS(STR(?type), "http://dbpedia.org/ontology/"))
   }}
   """
-  return [r["type"]["value"] for r in sql_query(query)]
+  result = []
+  for r in sql_query(query):
+      type = r["type"]["value"]
+      if type not in result:
+        result.append(type)
+        superclasses = get_superclasses(type)
+        for s in superclasses:
+            if s not in result:
+                result.append(s)
+  return result
 
-def get_dbo_property_ranges(prop):
+def get_dbo_property_range_or_domain(prop, rdfs_type):
   """Fetches rdfs:range for dbo:property."""
   query = f"""
   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
   PREFIX dbo: <http://dbpedia.org/ontology/>
-  SELECT DISTINCT ?range WHERE {{ dbo:{prop} rdfs:range ?range . }}
+  SELECT DISTINCT ?{rdfs_type} WHERE {{ dbo:{prop} rdfs:{rdfs_type} ?{rdfs_type} . }}
   """
-  return [r["range"]["value"] for r in sql_query(query)]
+  if rdfs_type == 'range':
+    return [r["range"]["value"] for r in sql_query(query)]
+  elif rdfs_type == 'domain':
+    return [r["domain"]["value"] for r in sql_query(query)]
+
+def get_superclasses(resource_url):
+  """
+  Returns all superclasses via rdfs:subClassOf*.
+  """
+  query = f"""
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  SELECT ?superclass WHERE {{
+      <{resource_url}> rdfs:subClassOf* ?superclass .
+      FILTER(?superclass != <{resource_url}>)
+      FILTER(STRSTARTS(STR(?superclass), "http://dbpedia.org/ontology/"))
+  }}
+  """
+  return [r["superclass"]["value"] for r in sql_query(query)]
 
 def sql_query(query_string):
   """
