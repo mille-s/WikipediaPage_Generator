@@ -10,6 +10,9 @@ import glob
 import xmltodict
 from colored import Fore, Back, Style
 # from google.colab import files
+import random
+
+random.seed(42)
 
 class TripleSet:
   def __init__(self, triples_list, category, eid, shape, shape_type):
@@ -67,7 +70,7 @@ def get_first_n_instances_of_props(list_triple_objects, max_num_of_instances_of_
   """
   Function that selects the first n occurrences of a triple that contains the same property.
   Input list_triple_objects: a list of triple objects, each triple should have 3 attributes: DBsubj, DBprop, DBobj.
-  Input max_num_of_instances_of_prop_desired: an integer that specifies the maximum number of occurrences of each property in the triple set.
+  Input max_num_of_instances_of_prop_desired: an integer that specifies the maximum number of occurrences of each property in the triple set, or 2 integers separated by a dash "-".
   Input properties_that_can_happen_once_only; a list of property labels that cannot have 2 or more values for the same subject, even though they do have more than one on the queried resource.
   Output: a list of ist indices, e.g [0, 1, 2, 3, 4, 5, 6, 8, 9].
   """    
@@ -75,6 +78,7 @@ def get_first_n_instances_of_props(list_triple_objects, max_num_of_instances_of_
   dico_dbSubj_properties = {}
   # Dico to keep track of how many times each property is found in the triple set
   dico_num_instances_of_prop_found = {}
+  dico_max_num_of_instances_of_prop_found = {}
 
   selected_properties = []
   for i, triple_object in enumerate(list_triple_objects):
@@ -82,10 +86,20 @@ def get_first_n_instances_of_props(list_triple_objects, max_num_of_instances_of_
     if triple_object.DBprop not in dico_num_instances_of_prop_found.keys():
       dico_num_instances_of_prop_found[triple_object.DBprop] = 1
       selected_properties.append(i)
+      # The first time we see a property, set a random max_num_of_instances_of_prop_desired within the range provided above (we want a different number for each triple set)
+      if re.search('-', max_num_of_instances_of_prop_desired):
+        num1 = int(max_num_of_instances_of_prop_desired.split('-', 1)[0].strip())
+        num2 = int(max_num_of_instances_of_prop_desired.split('-', 1)[1].strip())
+        if num1 == num2:
+          dico_max_num_of_instances_of_prop_found[triple_object.DBprop] = num1
+        else:
+          dico_max_num_of_instances_of_prop_found[triple_object.DBprop] = random.randrange(num1, num2)
+      else:
+        dico_max_num_of_instances_of_prop_found[triple_object.DBprop] = int(max_num_of_instances_of_prop_desired)
     # For the second and more instance of a property, increase counter and if the resulting number is below that of the maximum number of instances of each property specified in the input, then add the id to the selected list
     else:
       dico_num_instances_of_prop_found[triple_object.DBprop] += 1
-      if dico_num_instances_of_prop_found[triple_object.DBprop] <= max_num_of_instances_of_prop_desired:
+      if dico_num_instances_of_prop_found[triple_object.DBprop] <= dico_max_num_of_instances_of_prop_found[triple_object.DBprop]:
         # Only add a 2nd or 3rd property if (i) that property is not in the list of props that can happen only once, or (ii) if it is in that list but the subject doesn't already have that property in the triple set
         if (triple_object.DBprop not in properties_that_can_happen_once_only) or (triple_object.DBsubj not in dico_dbSubj_properties.keys()) or (triple_object.DBprop not in dico_dbSubj_properties[triple_object.DBsubj]):
           selected_properties.append(i)
