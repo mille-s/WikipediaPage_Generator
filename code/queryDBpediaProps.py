@@ -85,9 +85,7 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain')
             actual_domain = get_resource_types(subj_name_final)
             triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges, expected_domain, actual_domain)
-            # Check whether there is (at least) one intersection between the sets of expected and actual values
-            if set(expected_ranges) & set(actual_ranges) and  set(expected_domain) & set(actual_domain):
-              list_triple_objects.append(triple_object)
+            list_triple_objects.append(triple_object)
   return list_triple_objects
 
 def get_resource_types(resource_name):
