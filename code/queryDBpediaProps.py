@@ -75,10 +75,8 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
         prop_name = property_uri.removeprefix(url_triples) # Changed from property_uri.rsplit('/', 1)[1] to remove_prefix for better readability
         obj_name = value
         if re.search('http://', value):
-          print(f"Checking {value}...")
           if triple_source == 'Ontology': # Changed obj_name to remove the ontology url prefix for better readability
             obj_name = value.removeprefix('http://dbpedia.org/resource/')
-            obj_is_dbo = True # Changed obj_is_dbo to True if the object is a dbo entity, which means we can check its types and compare them to the expected ranges of the property
           else:
             obj_name = value
           obj_name = value.rsplit('/', 1)[1]
@@ -102,15 +100,11 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             list_triple_objects.append(triple_object)
           else:
             expected_ranges = get_dbo_property_range_or_domain(prop_name, 'range', dict_properties)
-            if obj_is_dbo == True and entity_is_sbjORobj == 'Subj': # Changed to check if range is dbo
-              actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
-            else:
-              actual_ranges = []
+            actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
+            
             expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain', dict_properties)
-            if obj_is_dbo == True and entity_is_sbjORobj == 'Obj': # Changed to check if domain is dbo
-              actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
-            else:
-              actual_domain = []
+            actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
+            
             triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges, expected_domain, actual_domain)
             list_triple_objects.append(triple_object)
   return list_triple_objects
