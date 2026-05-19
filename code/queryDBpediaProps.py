@@ -33,6 +33,17 @@ class CheckedTriple(Triple):
     self.actual_domain = actual_domain
 
 def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', triple_validation = False):
+  # Load dumped version of entity and property classes
+  dict_properties = None
+  dict_entity_types = None
+  dict_superclasses = None
+  if triple_validation == True:
+    print('Loading offline class information...')
+    with open("/content/WikipediaPage_Generator/resources/properties.pickle", "rb") as handle_p, open("/content/WikipediaPage_Generator/resources/entity_types.pickle", "rb") as handle_e, open("/content/WikipediaPage_Generator/resources/superclasses.pickle", "rb") as handle_s:
+      dict_properties = pickle.load(handle_p)
+      dict_entity_types = pickle.load(handle_e)
+      dict_superclasses = pickle.load(handle_s)
+
   # Process and print the results
   list_triple_objects = []
   for result in results:
@@ -80,37 +91,47 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             triple_object = Triple(prop_name, subj_name_final, obj_name_final)
             list_triple_objects.append(triple_object)
           else:
-            expected_ranges = get_dbo_property_range_or_domain(prop_name, 'range')
-            actual_ranges = get_resource_types(obj_name_final)
-            expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain')
-            actual_domain = get_resource_types(subj_name_final)
+            expected_ranges = get_dbo_property_range_or_domain(prop_name, 'range', dict_properties)
+            actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
+            expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain', dict_properties)
+            actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
             triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges, expected_domain, actual_domain)
             list_triple_objects.append(triple_object)
   return list_triple_objects
 
-def get_resource_types(resource_name):
+def get_resource_types(resource_name, dict_entity_types, dict_superclasses):
   """
   Returns all rdf:type values under dbo: namespace for a resource.
   """
-  query = f"""
-  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-  SELECT DISTINCT ?type WHERE {{
-      <http://dbpedia.org/resource/{resource_name}> rdf:type ?type .
-      FILTER(STRSTARTS(STR(?type), "http://dbpedia.org/ontology/"))
-  }}
-  """
-  result = []
-  for r in sql_query(query):
-      type = r["type"]["value"]
-      if type not in result:
-        result.append(type)
-        superclasses = get_superclasses(type)
-        for s in superclasses:
-            if s not in result:
-                result.append(s)
-  return result
+  entity_dbkey = f'http://dbpedia.org/resource/{resource_name}'
 
-def get_dbo_property_range_or_domain(prop, rdfs_type):
+  list_classes = None
+
+  if entity_dbkey in dict_entity_types:
+    print("Using local class information...")
+    list_classes = list(dict_entity_types[entity_dbkey])
+  else:
+    print("Live DBpedia class information...")
+    query = f"""
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    SELECT DISTINCT ?type WHERE {{
+        <entity_dbkey> rdf:type ?type .
+        FILTER(STRSTARTS(STR(?type), "http://dbpedia.org/ontology/"))
+    }}
+    """
+    result = []
+    for r in sql_query(query):
+        type = r["type"]["value"]
+        if type not in result:
+          result.append(type)
+          superclasses = get_superclasses(type)
+          for s in superclasses:
+              if s not in result:
+                  result.append(s)
+    list_classes = result
+  return list_classes
+
+def get_dbo_property_range_or_domain(prop, rdfs_type, dict_properties):
   """Fetches rdfs:range for dbo:property."""
   query = f"""
   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
