@@ -34,12 +34,16 @@ class CheckedTriple(Triple):
 
 def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', triple_validation = False):
   # Load dumped version of entity and property classes
+  obj_is_dbo = False
+
   dict_properties = None
   dict_entity_types = None
   dict_superclasses = None
   if triple_validation == True:
     print('Loading offline class information...')
-    with open("/content/WikipediaPage_Generator/resources/properties.pickle", "rb") as handle_p, open("/content/WikipediaPage_Generator/resources/entity_types.pickle", "rb") as handle_e, open("/content/WikipediaPage_Generator/resources/superclasses.pickle", "rb") as handle_s:
+    with open("/content/WikipediaPage_Generator/resources/properties.pickle", "rb") as handle_p, \
+    open("/content/WikipediaPage_Generator/resources/entity_types.pickle", "rb") as handle_e, \
+    open("/content/WikipediaPage_Generator/resources/superclasses.pickle", "rb") as handle_s:
       dict_properties = pickle.load(handle_p)
       dict_entity_types = pickle.load(handle_e)
       dict_superclasses = pickle.load(handle_s)
@@ -68,9 +72,14 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
       # Look for uris that contain the target url
       if re.search(url_triples, property_uri):
         # Get the property name, which is at the end of the uri, after the last forward slash
-        prop_name = property_uri.rsplit('/', 1)[1]
+        prop_name = property_uri.remove_prefix(url_triples) # Changed from property_uri.rsplit('/', 1)[1] to remove_prefix for better readability
         obj_name = value
         if re.search('http://', value):
+          if triple_source == 'Ontology': # Changed obj_name to remove the ontology url prefix for better readability
+            obj_name = value.remove_prefix('http://dbpedia.org/resource/')
+            obj_is_dbo = True # Changed obj_is_dbo to True if the object is a dbo entity, which means we can check its types and compare them to the expected ranges of the property
+          else:
+            obj_name = value
           obj_name = value.rsplit('/', 1)[1]
         obj_name_final = ''
         subj_name_final = ''
@@ -92,9 +101,15 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             list_triple_objects.append(triple_object)
           else:
             expected_ranges = get_dbo_property_range_or_domain(prop_name, 'range', dict_properties)
-            actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
+            if obj_is_dbo == True and entity_is_sbjORobj == 'Subj': # Changed to check if range is dbo
+              actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
+            else:
+              actual_ranges = []
             expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain', dict_properties)
-            actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
+            if obj_is_dbo == True and entity_is_sbjORobj == 'Obj': # Changed to check if domain is dbo
+              actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
+            else:
+              actual_domain = []
             triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges, expected_domain, actual_domain)
             list_triple_objects.append(triple_object)
   return list_triple_objects
@@ -125,7 +140,10 @@ def get_resource_types(resource_name, dict_entity_types, dict_superclasses):
         type = r["type"]["value"]
         if type not in result:
           result.append(type)
-          superclasses = get_superclasses(type)
+          if type in dict_superclasses:
+            superclasses = dict_superclasses[type]
+          else:
+            superclasses = get_superclasses(type)
           for s in superclasses:
               if s not in result:
                   result.append(s)
@@ -134,15 +152,22 @@ def get_resource_types(resource_name, dict_entity_types, dict_superclasses):
 
 def get_dbo_property_range_or_domain(prop, rdfs_type, dict_properties):
   """Fetches rdfs:range for dbo:property."""
-  query = f"""
-  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-  PREFIX dbo: <http://dbpedia.org/ontology/>
-  SELECT DISTINCT ?{rdfs_type} WHERE {{ dbo:{prop} rdfs:{rdfs_type} ?{rdfs_type} . }}
-  """
-  if rdfs_type == 'range':
-    return [r["range"]["value"] for r in sql_query(query)]
-  elif rdfs_type == 'domain':
-    return [r["domain"]["value"] for r in sql_query(query)]
+  if prop in dict_properties:
+    print(f"Checking local {rdfs_type} information for property {prop}...")
+    if rdfs_type == 'range':
+      return list(dict_properties[prop]['range'])
+    elif rdfs_type == 'domain':
+      return list(dict_properties[prop]['domain'])
+  else:
+    query = f"""
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    SELECT DISTINCT ?{rdfs_type} WHERE {{ dbo:{prop} rdfs:{rdfs_type} ?{rdfs_type} . }}
+    """
+    if rdfs_type == 'range':
+      return [r["range"]["value"] for r in sql_query(query)]
+    elif rdfs_type == 'domain':
+      return [r["domain"]["value"] for r in sql_query(query)]
 
 def get_superclasses(resource_url):
   """
