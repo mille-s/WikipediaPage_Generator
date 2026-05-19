@@ -72,11 +72,11 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
       # Look for uris that contain the target url
       if re.search(url_triples, property_uri):
         # Get the property name, which is at the end of the uri, after the last forward slash
-        prop_name = property_uri.remove_prefix(url_triples) # Changed from property_uri.rsplit('/', 1)[1] to remove_prefix for better readability
+        prop_name = property_uri.removeprefix(url_triples) # Changed from property_uri.rsplit('/', 1)[1] to remove_prefix for better readability
         obj_name = value
         if re.search('http://', value):
           if triple_source == 'Ontology': # Changed obj_name to remove the ontology url prefix for better readability
-            obj_name = value.remove_prefix('http://dbpedia.org/resource/')
+            obj_name = value.removeprefix('http://dbpedia.org/resource/')
             obj_is_dbo = True # Changed obj_is_dbo to True if the object is a dbo entity, which means we can check its types and compare them to the expected ranges of the property
           else:
             obj_name = value
