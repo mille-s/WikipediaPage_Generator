@@ -79,6 +79,7 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             obj_name = value.removeprefix('http://dbpedia.org/resource/')
             obj_is_dbo = True # Changed obj_is_dbo to True if the object is a dbo entity, which means we can check its types and compare them to the expected ranges of the property
           else:
+            print(obj_name, "is a non-dbo value.")
             obj_name = value
           obj_name = value.rsplit('/', 1)[1]
         obj_name_final = ''
