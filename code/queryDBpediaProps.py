@@ -25,9 +25,9 @@ class Triple:
     self.DBobj = obj_value
 
 class CheckedTriple(Triple):
-  def __init__(self, prop, subj_value, obj_value, expected_ranges, actual_ranges=[], expected_domain=[], actual_domain=[]):
+  def __init__(self, prop, subj_value, obj_value, expected_range='', actual_ranges=[], expected_domain='', actual_domain=[]):
     super().__init__(prop, subj_value, obj_value)
-    self.expected_ranges = expected_ranges
+    self.expected_range = expected_range
     self.actual_ranges = actual_ranges
     self.expected_domain = expected_domain
     self.actual_domain = actual_domain
@@ -102,7 +102,7 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             triple_object = Triple(prop_name, subj_name_final, obj_name_final)
             list_triple_objects.append(triple_object)
           else:
-            expected_ranges = get_dbo_property_range_or_domain(prop_name, 'range', dict_properties)
+            expected_range = get_dbo_property_range_or_domain(prop_name, 'range', dict_properties)
             if entity_is_sbjORobj == 'Obj':
               actual_ranges = main_entity_types
             elif (entity_is_sbjORobj == 'Subj' and obj_is_dbo == True):
@@ -118,8 +118,7 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             else:
               actual_domain = []
 
-            triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges, expected_domain, actual_domain)
-            print(f"The value of {prop_name} for {subj_name_final} is {obj_name_final}. Expected ranges: {expected_ranges}, Actual ranges: {actual_ranges}, Expected domain: {expected_domain}, Actual domain: {actual_domain}")
+            triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_range, actual_ranges, expected_domain, actual_domain)
             list_triple_objects.append(triple_object)
   return list_triple_objects
 
