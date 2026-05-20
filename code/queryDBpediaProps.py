@@ -102,12 +102,14 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
           else:
             expected_ranges = get_dbo_property_range_or_domain(prop_name, 'range', dict_properties)
             if (entity_is_sbjORobj == 'Subj' and obj_is_dbo == True) or (entity_is_sbjORobj == 'Obj'):
+              print(f"Checking range information for {obj_name_final}...")
               actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
             else:
               actual_ranges = []
 
             expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain', dict_properties)
             if (entity_is_sbjORobj == 'Obj' and obj_is_dbo == True) or (entity_is_sbjORobj == 'Subj'):
+              print(f"Checking domain information for {subj_name_final}...")
               actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
             else:
               actual_domain = []
