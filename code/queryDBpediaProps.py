@@ -78,10 +78,9 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
           if re.search('http://', value):
             obj_name = value.removeprefix('http://dbpedia.org/resource/')
             obj_is_dbo = True
-          else:
-            obj_name = value
         else:
-          obj_name = value.rsplit('/', 1)[1]
+          if re.search('http://', value):
+            obj_name = value.rsplit('/', 1)[1]
         obj_name_final = ''
         subj_name_final = ''
         if entity_is_sbjORobj == 'Subj':
@@ -115,6 +114,11 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
 
             triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges, expected_domain, actual_domain)
             print(f"The value of {prop_name} for {subj_name_final} is {obj_name_final}. Expected ranges: {expected_ranges}, Actual ranges: {actual_ranges}, Expected domain: {expected_domain}, Actual domain: {actual_domain}")
+            print(f"In this triple the entity was a {entity_is_sbjORobj}.")
+            if obj_is_dbo == True:
+              print(f"The other value {value} was a dbo: entity.")
+            else:
+              print(f"The other value {value} was a literal.")
             list_triple_objects.append(triple_object)
   return list_triple_objects
 
