@@ -331,6 +331,7 @@ def get_dbpedia_properties(props_list_path, entity_name, triple_source, ignore_p
   # Get all properties for entity
   results_subj = ''
   results_obj = ''
+  print(f"Querying data source for triples about {entity_name}...")
   if triple_source == 'Ontology' or triple_source == 'Infobox':
     if get_triples_where_entity_is_subj == True:
       results_subj = get_properties_of_entity(selected_uri, 'Subj')
