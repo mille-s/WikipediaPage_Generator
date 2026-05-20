@@ -74,11 +74,13 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
         # Get the property name, which is at the end of the uri, after the last forward slash
         prop_name = property_uri.removeprefix(url_triples) # Changed from property_uri.rsplit('/', 1)[1] to remove_prefix for better readability
         obj_name = value
-        if re.search('http://', value):
-          if triple_source == 'Ontology': # Changed obj_name to remove the ontology url prefix for better readability
+        if triple_source == 'Ontology': # Changed obj_name to remove the ontology url prefix for better readability
+          if re.search('http://', value):
             obj_name = value.removeprefix('http://dbpedia.org/resource/')
+            obj_is_dbo = True
           else:
             obj_name = value
+        else:
           obj_name = value.rsplit('/', 1)[1]
         obj_name_final = ''
         subj_name_final = ''
@@ -100,12 +102,19 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             list_triple_objects.append(triple_object)
           else:
             expected_ranges = get_dbo_property_range_or_domain(prop_name, 'range', dict_properties)
-            actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
-            
+            if (entity_is_sbjORobj == 'Subj' and obj_is_dbo == True) or (entity_is_sbjORobj == 'Obj'):
+              actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
+            else:
+              actual_ranges = []
+
             expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain', dict_properties)
-            actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
-            
+            if (entity_is_sbjORobj == 'Obj' and obj_is_dbo == True) or (entity_is_sbjORobj == 'Subj'):
+              actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
+            else:
+              actual_domain = []
+
             triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges, expected_domain, actual_domain)
+            print(f"The value of {prop_name} for {subj_name_final} is {obj_name_final}. Expected ranges: {expected_ranges}, Actual ranges: {actual_ranges}, Expected domain: {expected_domain}, Actual domain: {actual_domain}")
             list_triple_objects.append(triple_object)
   return list_triple_objects
 
