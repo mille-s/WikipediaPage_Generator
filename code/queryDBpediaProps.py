@@ -102,7 +102,7 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             triple_object = Triple(prop_name, subj_name_final, obj_name_final)
             list_triple_objects.append(triple_object)
           else:
-            expected_range = get_dbo_property_range_or_domain(prop_name, 'range', dict_properties)
+            expected_range = get_dbo_property_range_or_domain(("http://dbpedia.org/ontology/"+prop_name), 'range', dict_properties)
             if entity_is_sbjORobj == 'Obj':
               actual_ranges = main_entity_types
             elif (entity_is_sbjORobj == 'Subj' and obj_is_dbo == True):
@@ -110,7 +110,7 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             else:
               actual_ranges = []
 
-            expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain', dict_properties)
+            expected_domain = get_dbo_property_range_or_domain(("http://dbpedia.org/ontology/"+prop_name), 'domain', dict_properties)
             if entity_is_sbjORobj == 'Subj':
               actual_domains = main_entity_types
             elif (entity_is_sbjORobj == 'Obj' and obj_is_dbo == True):
