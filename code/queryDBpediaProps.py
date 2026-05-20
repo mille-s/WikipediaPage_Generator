@@ -34,7 +34,9 @@ class CheckedTriple(Triple):
 
 def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', triple_validation = False):
   # Load dumped version of entity and property classes
-
+  # Right now validation is not supported for Infobox or Wikidata
+  if not triple_source == 'Ontology':
+    triple_validation = False
   dict_properties = None
   dict_entity_types = None
   dict_superclasses = None
