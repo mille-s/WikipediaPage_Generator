@@ -34,7 +34,6 @@ class CheckedTriple(Triple):
 
 def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', triple_validation = False):
   # Load dumped version of entity and property classes
-  obj_is_dbo = False
 
   dict_properties = None
   dict_entity_types = None
@@ -51,6 +50,7 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
   # Process and print the results
   list_triple_objects = []
   for result in results:
+    obj_is_dbo = False
     # property_uri is something like this: http://dbpedia.org/property/deathPlace
     property_uri = result["property"]["value"]
     # value is a string (1937-04-27) or an entity uri (http://dbpedia.org/resource/Saint_Petersburg)
@@ -102,25 +102,18 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
           else:
             expected_ranges = get_dbo_property_range_or_domain(prop_name, 'range', dict_properties)
             if (entity_is_sbjORobj == 'Subj' and obj_is_dbo == True) or (entity_is_sbjORobj == 'Obj'):
-              print(f"Checking range information for {obj_name_final}...")
               actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
             else:
               actual_ranges = []
 
             expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain', dict_properties)
             if (entity_is_sbjORobj == 'Obj' and obj_is_dbo == True) or (entity_is_sbjORobj == 'Subj'):
-              print(f"Checking domain information for {subj_name_final}...")
               actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
             else:
               actual_domain = []
 
             triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_ranges, actual_ranges, expected_domain, actual_domain)
             print(f"The value of {prop_name} for {subj_name_final} is {obj_name_final}. Expected ranges: {expected_ranges}, Actual ranges: {actual_ranges}, Expected domain: {expected_domain}, Actual domain: {actual_domain}")
-            print(f"In this triple the entity was a {entity_is_sbjORobj}.")
-            if obj_is_dbo == True:
-              print(f"The other value {value} was a dbo: entity.")
-            else:
-              print(f"The other value {value} was a literal.")
             list_triple_objects.append(triple_object)
   return list_triple_objects
 
