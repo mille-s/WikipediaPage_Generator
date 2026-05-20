@@ -163,9 +163,9 @@ def get_dbo_property_range_or_domain(prop, rdfs_type, dict_properties):
   if prop in dict_properties:
     print(f"Checking local {rdfs_type} information for property {prop}...")
     if rdfs_type == 'range':
-      return dict_properties[prop][0]
-    elif rdfs_type == 'domain':
       return dict_properties[prop][1]
+    elif rdfs_type == 'domain':
+      return dict_properties[prop][0]
   else:
     query = f"""
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
