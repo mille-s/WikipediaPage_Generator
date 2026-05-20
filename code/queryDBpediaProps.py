@@ -47,6 +47,8 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
       dict_entity_types = pickle.load(handle_e)
       dict_superclasses = pickle.load(handle_s)
 
+  main_entity_types = get_resource_types(subj_name, dict_entity_types, dict_superclasses)
+
   # Process and print the results
   list_triple_objects = []
   for result in results:
@@ -101,13 +103,17 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             list_triple_objects.append(triple_object)
           else:
             expected_ranges = get_dbo_property_range_or_domain(prop_name, 'range', dict_properties)
-            if (entity_is_sbjORobj == 'Subj' and obj_is_dbo == True) or (entity_is_sbjORobj == 'Obj'):
+            if entity_is_sbjORobj == 'Obj':
+              actual_ranges = main_entity_types
+            elif (entity_is_sbjORobj == 'Subj' and obj_is_dbo == True):
               actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
             else:
               actual_ranges = []
 
             expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain', dict_properties)
-            if (entity_is_sbjORobj == 'Obj' and obj_is_dbo == True) or (entity_is_sbjORobj == 'Subj'):
+            if entity_is_sbjORobj == 'Subj':
+              actual_domain = main_entity_types
+            elif (entity_is_sbjORobj == 'Obj' and obj_is_dbo == True):
               actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
             else:
               actual_domain = []
@@ -134,7 +140,7 @@ def get_resource_types(resource_name, dict_entity_types, dict_superclasses):
     query = f"""
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT DISTINCT ?type WHERE {{
-        <entity_dbkey> rdf:type ?type .
+        <{entity_dbkey}> rdf:type ?type .
         FILTER(STRSTARTS(STR(?type), "http://dbpedia.org/ontology/"))
     }}
     """
