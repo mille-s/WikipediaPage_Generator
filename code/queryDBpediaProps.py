@@ -25,12 +25,12 @@ class Triple:
     self.DBobj = obj_value
 
 class CheckedTriple(Triple):
-  def __init__(self, prop, subj_value, obj_value, expected_range='', actual_ranges=[], expected_domain='', actual_domain=[]):
+  def __init__(self, prop, subj_value, obj_value, expected_range='', actual_ranges=[], expected_domain='', actual_domains=[]):
     super().__init__(prop, subj_value, obj_value)
     self.expected_range = expected_range
     self.actual_ranges = actual_ranges
     self.expected_domain = expected_domain
-    self.actual_domain = actual_domain
+    self.actual_domains = actual_domains
 
 def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', triple_validation = False):
   # Load dumped version of entity and property classes
@@ -112,13 +112,13 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
 
             expected_domain = get_dbo_property_range_or_domain(prop_name, 'domain', dict_properties)
             if entity_is_sbjORobj == 'Subj':
-              actual_domain = main_entity_types
+              actual_domains = main_entity_types
             elif (entity_is_sbjORobj == 'Obj' and obj_is_dbo == True):
-              actual_domain = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
+              actual_domains = get_resource_types(subj_name_final, dict_entity_types, dict_superclasses)
             else:
-              actual_domain = []
+              actual_domains = []
 
-            triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_range, actual_ranges, expected_domain, actual_domain)
+            triple_object = CheckedTriple(prop_name, subj_name_final, obj_name_final, expected_range, actual_ranges, expected_domain, actual_domains)
             list_triple_objects.append(triple_object)
   return list_triple_objects
 
