@@ -24,6 +24,8 @@ class Triple:
     self.DBsubj = subj_value
     self.DBobj = obj_value
 
+# CheckTriple extends Triple with the range and domain expected by the property,
+# and the actual class of the subject and object, to be used for triple validation.
 class CheckedTriple(Triple):
   def __init__(self, prop, subj_value, obj_value, expected_range='', actual_ranges=[], expected_domain='', actual_domains=[]):
     super().__init__(prop, subj_value, obj_value)
@@ -34,12 +36,13 @@ class CheckedTriple(Triple):
 
 def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', triple_validation = False):
   # Load dumped version of entity and property classes
-  # Right now validation is not supported for Infobox or Wikidata
+  # Right now validation is not supported for Infobox or Wikidata - 21/05/2026
   if not triple_source == 'Ontology':
     triple_validation = False
   dict_properties = None
   dict_entity_types = None
   dict_superclasses = None
+  main_entity_types = None
   if triple_validation == True:
     print('Loading offline class information...')
     with open("/content/WikipediaPage_Generator/resources/properties.pickle", "rb") as handle_p, \
@@ -49,12 +52,15 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
       dict_entity_types = pickle.load(handle_e)
       dict_superclasses = pickle.load(handle_s)
 
-  main_entity_types = get_resource_types(subj_name, dict_entity_types, dict_superclasses)
+    # The classes of the main entity (subj_name) is loaded once at the start - 21/05/2026
+    main_entity_types = get_resource_types(subj_name, dict_entity_types, dict_superclasses)
 
   # Process and print the results
   list_triple_objects = []
   for result in results:
+    # Toggle for avoid checking non-dbo properties, to increase efficiency. - 21/05/2026
     obj_is_dbo = False
+
     # property_uri is something like this: http://dbpedia.org/property/deathPlace
     property_uri = result["property"]["value"]
     # value is a string (1937-04-27) or an entity uri (http://dbpedia.org/resource/Saint_Petersburg)
@@ -76,13 +82,17 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
       # Look for uris that contain the target url
       if re.search(url_triples, property_uri):
         # Get the property name, which is at the end of the uri, after the last forward slash
-        prop_name = property_uri.removeprefix(url_triples) # Changed from property_uri.rsplit('/', 1)[1] to remove_prefix for better readability
+        
+        #prop_name = property_uri.rsplit('/', 1)[1] Removed to avoid issues with entities with a slash in their name, and replaced it with the following line - 21/05/2026
+        prop_name = property_uri.removeprefix(url_triples)
         obj_name = value
-        if triple_source == 'Ontology': # Changed obj_name to remove the ontology url prefix for better readability
+        if triple_source == 'Ontology' and triple_validation:
+          # Changed obj_name to remove the ontology url prefix for better readability
           if re.search('http://', value):
             obj_name = value.removeprefix('http://dbpedia.org/resource/')
             obj_is_dbo = True
         else:
+          # Runs the original code block - 21/05/2026
           if re.search('http://', value):
             obj_name = value.rsplit('/', 1)[1]
         obj_name_final = ''
@@ -104,14 +114,24 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
             triple_object = Triple(prop_name, subj_name_final, obj_name_final)
             list_triple_objects.append(triple_object)
           else:
+            # If the code is validating, it extracts the range and domain from the property
             expected_range = get_dbo_property_range_or_domain(("http://dbpedia.org/ontology/"+prop_name), 'range', dict_properties)
+            expected_domain = get_dbo_property_range_or_domain(("http://dbpedia.org/ontology/"+prop_name), 'domain', dict_properties)
+
+            # For the ranges
+            #   If the main entity is in the object position, then the range is the class of the main entity
+            #   If the main entity is in the subject position and the object is a dbo resource:
+            #     then the range is the class of the object
             actual_ranges = []
             if entity_is_sbjORobj == 'Obj':
               actual_ranges = main_entity_types
             elif (entity_is_sbjORobj == 'Subj' and obj_is_dbo == True):
               actual_ranges = get_resource_types(obj_name_final, dict_entity_types, dict_superclasses)
 
-            expected_domain = get_dbo_property_range_or_domain(("http://dbpedia.org/ontology/"+prop_name), 'domain', dict_properties)
+            # For the domains
+            # If the main entity is in the subject position, then the domain is the class of the main entity
+            # If the main entity is in the object position and the subject is a dbo resource:
+            #     then the domain is the class of the subject
             actual_domains = []
             if entity_is_sbjORobj == 'Subj':
               actual_domains = main_entity_types
@@ -125,6 +145,8 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
 def get_resource_types(resource_name, dict_entity_types, dict_superclasses):
   """
   Returns all rdf:type values under dbo: namespace for a resource.
+  The code first checks if the types are available in the local dump, and if not, it queries the live DBpedia endpoint.
+  It also retrieves all superclasses of the types, to be used for triple validation.
   """
   entity_dbkey = f'http://dbpedia.org/resource/{resource_name}'
   print(f"Checking entity {resource_name}...")
@@ -159,7 +181,10 @@ def get_resource_types(resource_name, dict_entity_types, dict_superclasses):
   return list_classes
 
 def get_dbo_property_range_or_domain(prop, rdfs_type, dict_properties):
-  """Fetches rdfs:range for dbo:property."""
+  """
+  Fetches rdfs:range for dbo:property.
+  The code first checks if the range/domain is available in the local dump, and if not, it queries the live DBpedia endpoint.
+  """
   if prop in dict_properties:
     print(f"Checking local {rdfs_type} information for property {prop}...")
     if rdfs_type == 'range':
@@ -167,6 +192,9 @@ def get_dbo_property_range_or_domain(prop, rdfs_type, dict_properties):
     elif rdfs_type == 'domain':
       return dict_properties[prop][0]
   else:
+    # prop prefix removed to fix the query pattern - 21/05/2026
+    if prop.startswith('http://dbpedia.org/ontology/'):
+      prop = prop.removeprefix('http://dbpedia.org/ontology/')
     query = f"""
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX dbo: <http://dbpedia.org/ontology/>
