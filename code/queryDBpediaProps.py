@@ -248,7 +248,7 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
   assert len(valid_list_triple_objects)+len(invalid_list_triple_objects) == len(list_triple_objects), "Invalid number of triples, you seem to have lost or picked up some on the way"
 
   # Write a log file
-  with codecs.open('log_triple_filtering.txt', 'w', 'utf-8') as f:
+  with codecs.open('log_triple_filtering.txt', 'a', 'utf-8') as f:
     for line in log_lines:
       f.write(line + '\n')
   
