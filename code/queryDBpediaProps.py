@@ -243,7 +243,7 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
     log_lines.append(f'{invalid_triple_object.DBsubj} {invalid_triple_object.DBprop} {invalid_triple_object.DBobj}')
     if show_log:
       print(invalid_triple_object.DBsubj, invalid_triple_object.DBprop, invalid_triple_object.DBobj)
-  log_lines.append("\n\n#######################################################\n")
+  log_lines.append("\n#######################################################\n\n")
 
   assert len(valid_list_triple_objects)+len(invalid_list_triple_objects) == len(list_triple_objects), "Invalid number of triples, you seem to have lost or picked up some on the way"
 
@@ -264,7 +264,7 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
   dict_superclasses = None
   main_entity_types = None
   if triple_validation == True:
-    print('Loading offline class information for Wikipedia top 10k entities...')
+    # print('Loading offline class information for Wikipedia top 10k entities...')
     with open("/content/WikipediaPage_Generator/resources/properties.pickle", "rb") as handle_p, \
     open("/content/WikipediaPage_Generator/resources/entity_types.pickle", "rb") as handle_e, \
     open("/content/WikipediaPage_Generator/resources/superclasses.pickle", "rb") as handle_s:
