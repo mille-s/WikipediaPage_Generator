@@ -86,7 +86,7 @@ def is_integer(text: str) -> bool:
     return text.isdigit()
 
 
-def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj):
+def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show_log=False):
   """Takes as input the three lists returned by the get_dbpedia_properties function
       list_triple_object contains object of class Triple, with 3 attributes: DBsubj, DBprop, DBobj
       list_propObj is a list of properties with their objects used for UI (for triples selection by the user)
@@ -127,39 +127,49 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj):
               ('fail', 'unknown'): 'Invalid (Domain does not match, no actual range to check against)',
           }
 
+  log_lines = []
   valid_list_triple_object_ids = []
   invalid_list_triple_object_ids = []
-  print('')
   for index_ts, triple_object in enumerate(list_triple_objects):
     validity = "Invalid"
-    print("Checking", triple_object.DBsubj, f'{Back.yellow}{triple_object.DBprop}{Style.reset}', triple_object.DBobj)
+    log_lines.append("Checking", triple_object.DBsubj, triple_object.DBprop, triple_object.DBobj)
+    if show_log:
+      print("Checking", triple_object.DBsubj, f'{Back.yellow}{triple_object.DBprop}{Style.reset}', triple_object.DBobj)
 
     if triple_object.expected_range.__contains__("http://www.w3.org/2001/XMLSchema") or triple_object.expected_range.__contains__("http://www.w3.org/1999/02/22-rdf-syntax-ns"):
       # print("Checking the pattern of the range")
       validator = XSD_VALIDATORS.get(triple_object.expected_range)
       if validator and validator(triple_object.DBobj):
           validity = "Valid"
-          print(f'  {Fore.green}{Back.white} {validity}, based on range check{Style.reset}')
+          if show_log:
+            print(f'  {Fore.green}{Back.white} {validity}, based on range check{Style.reset}')
       elif validator:
           validity = "Invalid"
-          print(f'  {Fore.cyan}{Back.white} {validity}, based on range check{Style.reset}')
+          if show_log:
+            print(f'  {Fore.cyan}{Back.white} {validity}, based on range check{Style.reset}')
       else:
         validity = f"Unknown {triple_object.expected_range}"
-        print(f'  {Fore.red}{Back.white} {validity}, based on range check{Style.reset}')
+        if show_log:
+          print(f'  {Fore.red}{Back.white} {validity}, based on range check{Style.reset}')
+      log_lines.append(f'  {validity}, based on range check')
       # print(validity, "based on range check")
     elif triple_object.expected_domain.__contains__("http://www.w3.org/2001/XMLSchema") or triple_object.expected_domain.__contains__("http://www.w3.org/1999/02/22-rdf-syntax-ns"):
       # print("Checking the pattern of the domain")
       validator = XSD_VALIDATORS.get(triple_object.expected_domain)
       if validator and validator(triple_object.DBsubj):
         validity = "Valid"
-        print(f'  {Fore.green}{Back.white} {validity}, based on domain check{Style.reset}')
+        if show_log:
+          print(f'  {Fore.green}{Back.white} {validity}, based on domain check{Style.reset}')
       elif validator:
         validity = "Invalid"
-        print(f'  {Fore.red}{Back.white} {validity}, based on domain check{Style.reset}')
+        if show_log:
+          print(f'  {Fore.red}{Back.white} {validity}, based on domain check{Style.reset}')
       else:
         validity = f"Unknown {triple_object.expected_domain}"
-        print(f'  {Fore.orange}{Back.white} {validity}, based on domain check{Style.reset}')
+        if show_log:
+          print(f'  {Fore.orange}{Back.white} {validity}, based on domain check{Style.reset}')
       # print(validity, "based on domain check")
+      log_lines.append(f'  {validity}, based on domain check')
     else:
       # Validate resources using their types
       # Normalize empty values
@@ -194,11 +204,15 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj):
       validity = OUTCOMES[(domain_result, range_result)]
       # print(validity, "based on full check")
       if validity.startswith("Valid"):
-        print(f'  {Fore.green}{Back.white} {validity}, based on full check{Style.reset}')
+        if show_log:
+          print(f'  {Fore.green}{Back.white} {validity}, based on full check{Style.reset}')
       elif validity.startswith("Possibly"):
-        print(f'  {Fore.cyan}{Back.white} {validity}, based on full check{Style.reset}')
+        if show_log:
+          print(f'  {Fore.cyan}{Back.white} {validity}, based on full check{Style.reset}')
       else:
-        print(f'  {Fore.red}{Back.white} {validity}, based on full check{Style.reset}')
+        if show_log:
+          print(f'  {Fore.red}{Back.white} {validity}, based on full check{Style.reset}')
+      log_lines.append(f'  {validity}, based on full check')
 
     if validity.startswith("Valid"):
       valid_list_triple_object_ids.append(index_ts)
@@ -214,16 +228,29 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj):
   valid_list_obj = [list_obj[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
   invalid_list_obj = [list_obj[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
 
-  print("\n\nValid triples:\n")
+  log_lines.append("\n\nValid triples:")
+  if show_log:
+    print("\n\nValid triples:\n")
   for valid_triple_object in valid_list_triple_objects:
-    print(valid_triple_object.DBsubj, valid_triple_object.DBprop, valid_triple_object.DBobj)
-
-  print("\n\nInvalid triples:\n")
+    log_lines.append(f'{valid_triple_object.DBsubj} {valid_triple_object.DBprop} {valid_triple_object.DBobj}')
+    if show_log:
+      print(valid_triple_object.DBsubj, valid_triple_object.DBprop, valid_triple_object.DBobj)
+  
+  log_lines.append("\n\nInvalid triples:")
+  if show_log:
+    print("\n\nInvalid triples:\n")
   for invalid_triple_object in invalid_list_triple_objects:
-    print(invalid_triple_object.DBsubj, invalid_triple_object.DBprop, invalid_triple_object.DBobj)
+    log_lines.append(f'{invalid_triple_object.DBsubj} {invalid_triple_object.DBprop} {invalid_triple_object.DBobj}')
+    if show_log:
+      print(invalid_triple_object.DBsubj, invalid_triple_object.DBprop, invalid_triple_object.DBobj)
 
   assert len(valid_list_triple_objects)+len(invalid_list_triple_objects) == len(list_triple_objects), "Invalid number of triples, you seem to have lost or picked up some on the way"
 
+  # Write a log file
+  with codecs.open('log_triple_filtering.txt', 'w', 'utf-8') as f:
+    for line in log_lines:
+      f.write(line + '\n')
+  
   return valid_list_triple_objects, valid_list_propObj, valid_list_obj
   
 def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', triple_validation = False):
@@ -345,10 +372,10 @@ def get_resource_types(resource_name, dict_entity_types, dict_superclasses):
   list_classes = None
 
   if entity_dbkey in dict_entity_types:
-    print(f"Getting local class information for entity {resource_name}...")
+    # print(f"Getting local class information for entity {resource_name}...")
     list_classes = list(dict_entity_types[entity_dbkey])
   else:
-    print(f"Getting live DBpedia class information for entity {resource_name}...")
+    # print(f"Getting live DBpedia class information for entity {resource_name}...")
     query = f"""
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT DISTINCT ?type WHERE {{
@@ -377,7 +404,7 @@ def get_dbo_property_range_or_domain(prop, rdfs_type, dict_properties):
   The code first checks if the range/domain is available in the local dump, and if not, it queries the live DBpedia endpoint.
   """
   if prop in dict_properties:
-    print(f"Getting local {rdfs_type} information for property {prop}...")
+    # print(f"Getting local {rdfs_type} information for property {prop}...")
     if rdfs_type == 'range':
       return dict_properties[prop][1]
     elif rdfs_type == 'domain':
@@ -549,7 +576,7 @@ def get_dbpedia_properties(props_list_path, entity_name, triple_source, ignore_p
   # Get all properties for entity
   results_subj = ''
   results_obj = ''
-  print(f"Querying data source for triples about {entity_name}...")
+  # print(f"Querying data source for triples about {entity_name}...")
   if triple_source == 'Ontology' or triple_source == 'Infobox':
     if get_triples_where_entity_is_subj == True:
       results_subj = get_properties_of_entity(selected_uri, 'Subj')
