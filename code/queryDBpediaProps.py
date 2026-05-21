@@ -149,15 +149,15 @@ def get_resource_types(resource_name, dict_entity_types, dict_superclasses):
   It also retrieves all superclasses of the types, to be used for triple validation.
   """
   entity_dbkey = f'http://dbpedia.org/resource/{resource_name}'
-  print(f"Checking entity {resource_name}...")
+  print(f"{resource_name}...")
 
   list_classes = None
 
   if entity_dbkey in dict_entity_types:
-    print("  Checking local class information...")
+    print("  Getting local class information...")
     list_classes = list(dict_entity_types[entity_dbkey])
   else:
-    print("  Checking live DBpedia class information...")
+    print("  Getting live DBpedia class information...")
     query = f"""
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT DISTINCT ?type WHERE {{
@@ -186,7 +186,7 @@ def get_dbo_property_range_or_domain(prop, rdfs_type, dict_properties):
   The code first checks if the range/domain is available in the local dump, and if not, it queries the live DBpedia endpoint.
   """
   if prop in dict_properties:
-    print(f"Checking local {rdfs_type} information for property {prop}...")
+    print(f"Getting local {rdfs_type} information for property {prop}...")
     if rdfs_type == 'range':
       return dict_properties[prop][1]
     elif rdfs_type == 'domain':
