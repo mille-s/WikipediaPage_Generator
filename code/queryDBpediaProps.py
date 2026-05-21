@@ -130,83 +130,79 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj):
   invalid_list_triple_object_ids = []
   print('')
   for index_ts, triple_object in enumerate(list_triple_objects):
-    if triple_validation:
-      validity = "Invalid"
+    validity = "Invalid"
+    print("Checking", triple_object.DBsubj, f'{Back.yellow}{triple_object.DBprop}{Style.reset}', triple_object.DBobj)
 
-      print("Checking", triple_object.DBsubj, f'{Back.yellow}{triple_object.DBprop}{Style.reset}', triple_object.DBobj)
-
-      if triple_object.expected_range.__contains__("http://www.w3.org/2001/XMLSchema") or triple_object.expected_range.__contains__("http://www.w3.org/1999/02/22-rdf-syntax-ns"):
-        # print("Checking the pattern of the range")
-        validator = XSD_VALIDATORS.get(triple_object.expected_range)
-        if validator and validator(triple_object.DBobj):
-            validity = "Valid"
-            print(f'  {Fore.green}{Back.white} {validity}, based on range check{Style.reset}')
-        elif validator:
-            validity = "Invalid"
-            print(f'  {Fore.cyan}{Back.white} {validity}, based on range check{Style.reset}')
-        else:
-          validity = f"Unknown {triple_object.expected_range}"
-          print(f'  {Fore.red}{Back.white} {validity}, based on range check{Style.reset}')
-        # print(validity, "based on range check")
-      elif triple_object.expected_domain.__contains__("http://www.w3.org/2001/XMLSchema") or triple_object.expected_domain.__contains__("http://www.w3.org/1999/02/22-rdf-syntax-ns"):
-        # print("Checking the pattern of the domain")
-        validator = XSD_VALIDATORS.get(triple_object.expected_domain)
-        if validator and validator(triple_object.DBsubj):
+    if triple_object.expected_range.__contains__("http://www.w3.org/2001/XMLSchema") or triple_object.expected_range.__contains__("http://www.w3.org/1999/02/22-rdf-syntax-ns"):
+      # print("Checking the pattern of the range")
+      validator = XSD_VALIDATORS.get(triple_object.expected_range)
+      if validator and validator(triple_object.DBobj):
           validity = "Valid"
-          print(f'  {Fore.green}{Back.white} {validity}, based on domain check{Style.reset}')
-        elif validator:
+          print(f'  {Fore.green}{Back.white} {validity}, based on range check{Style.reset}')
+      elif validator:
           validity = "Invalid"
-          print(f'  {Fore.red}{Back.white} {validity}, based on domain check{Style.reset}')
-        else:
-          validity = f"Unknown {triple_object.expected_domain}"
-          print(f'  {Fore.orange}{Back.white} {validity}, based on domain check{Style.reset}')
-        # print(validity, "based on domain check")
+          print(f'  {Fore.cyan}{Back.white} {validity}, based on range check{Style.reset}')
       else:
-        # Validate resources using their types
-        # Normalize empty values
-        domain_expected_blank = triple_object.expected_domain == ''
-        range_expected_blank = triple_object.expected_range == ''
-        domain_actual_blank = triple_object.actual_domains == set()
-        range_actual_blank = triple_object.actual_ranges == set()
-
-        domain_result = 'fail'
-        range_result = 'fail'
-
-        if triple_object.DBobj.__contains__("__") or triple_object.DBsubj.__contains__("__"):
-            domain_result = 'unknown'
-            range_result = 'unknown'
-        else:
-          # Evaluate domain check
-          if domain_expected_blank:
-              domain_result = 'skip'
-          elif domain_actual_blank:
-              domain_result = 'unknown'
-          elif triple_object.expected_domain in triple_object.actual_domains:
-              domain_result = 'pass'
-
-          # Evaluate range check
-          if range_expected_blank:
-              range_result = 'skip'
-          elif range_actual_blank:
-              range_result = 'unknown'
-          elif triple_object.expected_range in triple_object.actual_ranges:
-              range_result = 'pass'
-
-        validity = OUTCOMES[(domain_result, range_result)]
-        # print(validity, "based on full check")
-        if validity.startswith("Valid"):
-          print(f'  {Fore.green}{Back.white} {validity}, based on full check{Style.reset}')
-        elif validity.startswith("Possibly"):
-          print(f'  {Fore.cyan}{Back.white} {validity}, based on full check{Style.reset}')
-        else:
-          print(f'  {Fore.red}{Back.white} {validity}, based on full check{Style.reset}')
-
-      if validity.startswith("Valid"):
-        valid_list_triple_object_ids.append(index_ts)
+        validity = f"Unknown {triple_object.expected_range}"
+        print(f'  {Fore.red}{Back.white} {validity}, based on range check{Style.reset}')
+      # print(validity, "based on range check")
+    elif triple_object.expected_domain.__contains__("http://www.w3.org/2001/XMLSchema") or triple_object.expected_domain.__contains__("http://www.w3.org/1999/02/22-rdf-syntax-ns"):
+      # print("Checking the pattern of the domain")
+      validator = XSD_VALIDATORS.get(triple_object.expected_domain)
+      if validator and validator(triple_object.DBsubj):
+        validity = "Valid"
+        print(f'  {Fore.green}{Back.white} {validity}, based on domain check{Style.reset}')
+      elif validator:
+        validity = "Invalid"
+        print(f'  {Fore.red}{Back.white} {validity}, based on domain check{Style.reset}')
       else:
-        invalid_list_triple_object_ids.append(index_ts)
+        validity = f"Unknown {triple_object.expected_domain}"
+        print(f'  {Fore.orange}{Back.white} {validity}, based on domain check{Style.reset}')
+      # print(validity, "based on domain check")
     else:
+      # Validate resources using their types
+      # Normalize empty values
+      domain_expected_blank = triple_object.expected_domain == ''
+      range_expected_blank = triple_object.expected_range == ''
+      domain_actual_blank = triple_object.actual_domains == set()
+      range_actual_blank = triple_object.actual_ranges == set()
+
+      domain_result = 'fail'
+      range_result = 'fail'
+
+      if triple_object.DBobj.__contains__("__") or triple_object.DBsubj.__contains__("__"):
+          domain_result = 'unknown'
+          range_result = 'unknown'
+      else:
+        # Evaluate domain check
+        if domain_expected_blank:
+            domain_result = 'skip'
+        elif domain_actual_blank:
+            domain_result = 'unknown'
+        elif triple_object.expected_domain in triple_object.actual_domains:
+            domain_result = 'pass'
+
+        # Evaluate range check
+        if range_expected_blank:
+            range_result = 'skip'
+        elif range_actual_blank:
+            range_result = 'unknown'
+        elif triple_object.expected_range in triple_object.actual_ranges:
+            range_result = 'pass'
+
+      validity = OUTCOMES[(domain_result, range_result)]
+      # print(validity, "based on full check")
+      if validity.startswith("Valid"):
+        print(f'  {Fore.green}{Back.white} {validity}, based on full check{Style.reset}')
+      elif validity.startswith("Possibly"):
+        print(f'  {Fore.cyan}{Back.white} {validity}, based on full check{Style.reset}')
+      else:
+        print(f'  {Fore.red}{Back.white} {validity}, based on full check{Style.reset}')
+
+    if validity.startswith("Valid"):
       valid_list_triple_object_ids.append(index_ts)
+    else:
+      invalid_list_triple_object_ids.append(index_ts)
 
   valid_list_triple_objects = [list_triple_objects[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
   invalid_list_triple_objects = [list_triple_objects[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
