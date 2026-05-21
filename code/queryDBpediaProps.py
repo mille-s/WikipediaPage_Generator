@@ -230,7 +230,7 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
 
   log_lines.append("\nValid triples:")
   if show_log:
-    print("\n\nValid triples:\n")
+    print("\nValid triples:\n")
   for valid_triple_object in valid_list_triple_objects:
     log_lines.append(f'{valid_triple_object.DBsubj} {valid_triple_object.DBprop} {valid_triple_object.DBobj}')
     if show_log:
@@ -238,11 +238,12 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
   
   log_lines.append("\nInvalid triples:")
   if show_log:
-    print("\n\nInvalid triples:\n")
+    print("\nInvalid triples:\n")
   for invalid_triple_object in invalid_list_triple_objects:
     log_lines.append(f'{invalid_triple_object.DBsubj} {invalid_triple_object.DBprop} {invalid_triple_object.DBobj}')
     if show_log:
       print(invalid_triple_object.DBsubj, invalid_triple_object.DBprop, invalid_triple_object.DBobj)
+      print('\n\n')
   log_lines.append("\n#######################################################\n\n")
 
   assert len(valid_list_triple_objects)+len(invalid_list_triple_objects) == len(list_triple_objects), "Invalid number of triples, you seem to have lost or picked up some on the way"
@@ -577,7 +578,7 @@ def get_dbpedia_properties(props_list_path, entity_name, triple_source, ignore_p
   # Get all properties for entity
   results_subj = ''
   results_obj = ''
-  # print(f"Querying data source for triples about {entity_name}...")
+  print(f"Querying data source for triples about {entity_name}...")
   if triple_source == 'Ontology' or triple_source == 'Infobox':
     if get_triples_where_entity_is_subj == True:
       results_subj = get_properties_of_entity(selected_uri, 'Subj')
