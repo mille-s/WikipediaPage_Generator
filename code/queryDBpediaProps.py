@@ -153,10 +153,10 @@ def get_resource_types(resource_name, dict_entity_types, dict_superclasses):
   list_classes = None
 
   if entity_dbkey in dict_entity_types:
-    print("Getting local class information for entity {resource_name}...")
+    print(f"Getting local class information for entity {resource_name}...")
     list_classes = list(dict_entity_types[entity_dbkey])
   else:
-    print("Getting live DBpedia class information for entity {resource_name}...")
+    print(f"Getting live DBpedia class information for entity {resource_name}...")
     query = f"""
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT DISTINCT ?type WHERE {{
