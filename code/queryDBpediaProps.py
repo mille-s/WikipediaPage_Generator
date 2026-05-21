@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 # Query DBpedia for a given entity
-# From ChatGPT. Prompt: "Thanks! Now please write a sparql query that can be used in Python to get all the properties related to Olga Bondareva on DBpedia. For example, birthDate, birthPlace, etc."
 from SPARQLWrapper import SPARQLWrapper, JSON
 import os
 import re
@@ -10,6 +9,7 @@ import codecs
 import sys
 import pickle
 import requests
+from colored import Fore, Back, Style
 
 # print('There are '+str(len(list_properties))+' different property labels.')
 # print(sorted(list_properties))
@@ -34,6 +34,201 @@ class CheckedTriple(Triple):
     self.expected_domain = expected_domain
     self.actual_domains = actual_domains
 
+def always_valid(text):
+    """Validation function that always returns True. Used for XSD string types."""
+    return True
+
+def is_yyyy_mm_dd(text: str) -> bool:
+    """
+    Checks if a string is a valid date in YYYY-MM-DD format.
+    Handles negative years by stripping the minus sign and padding the year to 4 digits.
+    """
+    try:
+        if text.startswith('-'):
+            temp_text = text[1:]
+            parts = temp_text.split("-")
+            if len(parts[0]) < 4:
+                parts[0] = parts[0].zfill(4)  # pad negative year to 4 digits
+            padded_text = "-".join(parts)
+            datetime.strptime(padded_text, "%Y-%m-%d")
+        else:
+            datetime.strptime(text, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+def is_double(text: str) -> bool:
+    """Checks if text can be converted to a float."""
+    try:
+        float(text)
+        return True
+    except ValueError:
+        return False
+
+def is_year(text: str) -> bool:
+    """Checks if text is an integer, possibly negative (for years)."""
+    return re.fullmatch(r"-?\d+", text) is not None
+
+def is_non_negative_integer(text: str) -> bool:
+    """Checks if text is a non-negative integer."""
+    if not text:
+        return False
+    text = text.strip()
+    return text.isdigit()
+
+def is_positive_integer(text: str) -> bool:
+    """Checks if text is a positive integer (>0)."""
+    return text.isdigit() and int(text) > 0
+
+def is_integer(text: str) -> bool:
+    """Checks if text is an integer (non-negative, as written)."""
+    return text.isdigit()
+
+
+def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj):
+  """Takes as input the three lists returned by the get_dbpedia_properties function
+      list_triple_object contains object of class Triple, with 3 attributes: DBsubj, DBprop, DBobj
+      list_propObj is a list of properties with their objects used for UI (for triples selection by the user)
+      list_obj is a list of just the objects, used for getting class and gender info later on
+      The function returns the same 3 lists, but containing only validated triples if triple_validation is True.
+      """
+  XSD_VALIDATORS = {
+      "http://www.w3.org/2001/XMLSchema#string": always_valid,
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString": always_valid,
+      "http://www.w3.org/2001/XMLSchema#date": is_yyyy_mm_dd,
+      "http://www.w3.org/2001/XMLSchema#double": is_double,
+      "http://www.w3.org/2001/XMLSchema#float": is_double,
+      "http://www.w3.org/2001/XMLSchema#gYear": is_year,
+      "http://www.w3.org/2001/XMLSchema#nonNegativeInteger": is_non_negative_integer,
+      "http://www.w3.org/2001/XMLSchema#positiveInteger": is_positive_integer,
+      "http://www.w3.org/2001/XMLSchema#integer": is_integer,
+  }
+
+  OUTCOMES = {
+              # Valid
+              ('skip', 'skip'):    'Valid (No expected domain, no expected range)',
+              ('skip', 'pass'):    'Valid (No expected domain, range matches)',
+              ('pass', 'skip'):    'Valid (Domain matches, no expected range)',
+              ('pass', 'pass'):    'Valid (Domain matches, range matches)',
+              # Possibly Valid
+              ('skip', 'unknown'):    'Possibly Valid (No expected domain, no actual range to check against)',
+              ('unknown', 'skip'):    'Possibly Valid (No actual domain to check against, no expected range)',
+              ('unknown', 'pass'):    'Possibly Valid (No actual domain to check against, range matches)',
+              ('pass', 'unknown'):    'Possibly Valid (Domain matches, no actual range to check against)',
+              ('unknown', 'unknown'): 'Possibly Valid (No actual domain to check against, no actual range to check against)',
+              # Invalid
+              ('skip', 'fail'):    'Invalid (No expected domain, range does not match)',
+              ('fail', 'skip'):    'Invalid (Domain does not match, no expected range)',
+              ('fail', 'pass'):    'Invalid (Domain does not match, range matches)',
+              ('pass', 'fail'):    'Invalid (Domain matches, range does not match)',
+              ('fail', 'fail'):    'Invalid (Domain does not match, range does not match)',
+              ('unknown', 'fail'): 'Invalid (No actual domain to check against, range does not match)',
+              ('fail', 'unknown'): 'Invalid (Domain does not match, no actual range to check against)',
+          }
+
+  valid_list_triple_object_ids = []
+  invalid_list_triple_object_ids = []
+  print('')
+  for index_ts, triple_object in enumerate(list_triple_objects):
+    if triple_validation:
+      validity = "Invalid"
+
+      print("Checking", triple_object.DBsubj, f'{Back.yellow}{triple_object.DBprop}{Style.reset}', triple_object.DBobj)
+
+      if triple_object.expected_range.__contains__("http://www.w3.org/2001/XMLSchema") or triple_object.expected_range.__contains__("http://www.w3.org/1999/02/22-rdf-syntax-ns"):
+        # print("Checking the pattern of the range")
+        validator = XSD_VALIDATORS.get(triple_object.expected_range)
+        if validator and validator(triple_object.DBobj):
+            validity = "Valid"
+            print(f'  {Fore.green}{Back.white} {validity}, based on range check{Style.reset}')
+        elif validator:
+            validity = "Invalid"
+            print(f'  {Fore.cyan}{Back.white} {validity}, based on range check{Style.reset}')
+        else:
+          validity = f"Unknown {triple_object.expected_range}"
+          print(f'  {Fore.red}{Back.white} {validity}, based on range check{Style.reset}')
+        # print(validity, "based on range check")
+      elif triple_object.expected_domain.__contains__("http://www.w3.org/2001/XMLSchema") or triple_object.expected_domain.__contains__("http://www.w3.org/1999/02/22-rdf-syntax-ns"):
+        # print("Checking the pattern of the domain")
+        validator = XSD_VALIDATORS.get(triple_object.expected_domain)
+        if validator and validator(triple_object.DBsubj):
+          validity = "Valid"
+          print(f'  {Fore.green}{Back.white} {validity}, based on domain check{Style.reset}')
+        elif validator:
+          validity = "Invalid"
+          print(f'  {Fore.red}{Back.white} {validity}, based on domain check{Style.reset}')
+        else:
+          validity = f"Unknown {triple_object.expected_domain}"
+          print(f'  {Fore.orange}{Back.white} {validity}, based on domain check{Style.reset}')
+        # print(validity, "based on domain check")
+      else:
+        # Validate resources using their types
+        # Normalize empty values
+        domain_expected_blank = triple_object.expected_domain == ''
+        range_expected_blank = triple_object.expected_range == ''
+        domain_actual_blank = triple_object.actual_domains == set()
+        range_actual_blank = triple_object.actual_ranges == set()
+
+        domain_result = 'fail'
+        range_result = 'fail'
+
+        if triple_object.DBobj.__contains__("__") or triple_object.DBsubj.__contains__("__"):
+            domain_result = 'unknown'
+            range_result = 'unknown'
+        else:
+          # Evaluate domain check
+          if domain_expected_blank:
+              domain_result = 'skip'
+          elif domain_actual_blank:
+              domain_result = 'unknown'
+          elif triple_object.expected_domain in triple_object.actual_domains:
+              domain_result = 'pass'
+
+          # Evaluate range check
+          if range_expected_blank:
+              range_result = 'skip'
+          elif range_actual_blank:
+              range_result = 'unknown'
+          elif triple_object.expected_range in triple_object.actual_ranges:
+              range_result = 'pass'
+
+        validity = OUTCOMES[(domain_result, range_result)]
+        # print(validity, "based on full check")
+        if validity.startswith("Valid"):
+          print(f'  {Fore.green}{Back.white} {validity}, based on full check{Style.reset}')
+        elif validity.startswith("Possibly"):
+          print(f'  {Fore.cyan}{Back.white} {validity}, based on full check{Style.reset}')
+        else:
+          print(f'  {Fore.red}{Back.white} {validity}, based on full check{Style.reset}')
+
+      if validity.startswith("Valid"):
+        valid_list_triple_object_ids.append(index_ts)
+      else:
+        invalid_list_triple_object_ids.append(index_ts)
+    else:
+      valid_list_triple_object_ids.append(index_ts)
+
+  valid_list_triple_objects = [list_triple_objects[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
+  invalid_list_triple_objects = [list_triple_objects[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
+
+  valid_list_propObj = [list_propObj[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
+  invalid_list_propObj = [list_propObj[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
+
+  valid_list_obj = [list_obj[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
+  invalid_list_obj = [list_obj[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
+
+  print("\n\nValid triples:\n")
+  for valid_triple_object in valid_list_triple_objects:
+    print(valid_triple_object.DBsubj, valid_triple_object.DBprop, valid_triple_object.DBobj)
+
+  print("\n\nInvalid triples:\n")
+  for invalid_triple_object in invalid_list_triple_objects:
+    print(invalid_triple_object.DBsubj, invalid_triple_object.DBprop, invalid_triple_object.DBobj)
+
+  assert len(valid_list_triple_objects)+len(invalid_list_triple_objects) == len(list_triple_objects), "Invalid number of triples, you seem to have lost or picked up some on the way"
+
+  return valid_list_triple_objects, valid_list_propObj, valid_list_obj
+  
 def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', triple_validation = False):
   # Load dumped version of entity and property classes
   # Right now validation is not supported for Infobox or Wikidata - 21/05/2026
@@ -231,6 +426,7 @@ def sql_query(query_string):
   except:
       return []
 
+# First version from ChatGPT. Prompt: "Thanks! Now please write a sparql query that can be used in Python to get all the properties related to Olga Bondareva on DBpedia. For example, birthDate, birthPlace, etc."
 def get_properties_of_entity(uri, look_for_entity_as_sbjORobj):
   # Define the DBpedia SPARQL endpoint URL
   sparql_endpoint = "https://dbpedia.org/sparql"
