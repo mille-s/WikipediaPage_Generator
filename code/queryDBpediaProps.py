@@ -243,7 +243,8 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
     log_lines.append(f'{invalid_triple_object.DBsubj} {invalid_triple_object.DBprop} {invalid_triple_object.DBobj}')
     if show_log:
       print(invalid_triple_object.DBsubj, invalid_triple_object.DBprop, invalid_triple_object.DBobj)
-      print('\n\n')
+  if show_log:
+    print('\n')
   log_lines.append("\n#######################################################\n\n")
 
   assert len(valid_list_triple_objects)+len(invalid_list_triple_objects) == len(list_triple_objects), "Invalid number of triples, you seem to have lost or picked up some on the way"
