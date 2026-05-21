@@ -44,7 +44,7 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
   dict_superclasses = None
   main_entity_types = None
   if triple_validation == True:
-    print('Loading offline class information...')
+    print('Loading offline class information for Wikipedia top 10k entities...')
     with open("/content/WikipediaPage_Generator/resources/properties.pickle", "rb") as handle_p, \
     open("/content/WikipediaPage_Generator/resources/entity_types.pickle", "rb") as handle_e, \
     open("/content/WikipediaPage_Generator/resources/superclasses.pickle", "rb") as handle_s:
@@ -149,15 +149,14 @@ def get_resource_types(resource_name, dict_entity_types, dict_superclasses):
   It also retrieves all superclasses of the types, to be used for triple validation.
   """
   entity_dbkey = f'http://dbpedia.org/resource/{resource_name}'
-  print(f"{resource_name}...")
 
   list_classes = None
 
   if entity_dbkey in dict_entity_types:
-    print("  Getting local class information...")
+    print("Getting local class information for entity {resource_name}...")
     list_classes = list(dict_entity_types[entity_dbkey])
   else:
-    print("  Getting live DBpedia class information...")
+    print("Getting live DBpedia class information for entity {resource_name}...")
     query = f"""
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     SELECT DISTINCT ?type WHERE {{
