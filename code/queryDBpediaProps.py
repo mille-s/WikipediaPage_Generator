@@ -228,7 +228,7 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
   valid_list_obj = [list_obj[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
   invalid_list_obj = [list_obj[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
 
-  log_lines.append("\n\nValid triples:")
+  log_lines.append("\nValid triples:")
   if show_log:
     print("\n\nValid triples:\n")
   for valid_triple_object in valid_list_triple_objects:
@@ -236,13 +236,14 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
     if show_log:
       print(valid_triple_object.DBsubj, valid_triple_object.DBprop, valid_triple_object.DBobj)
   
-  log_lines.append("\n\nInvalid triples:")
+  log_lines.append("\nInvalid triples:")
   if show_log:
     print("\n\nInvalid triples:\n")
   for invalid_triple_object in invalid_list_triple_objects:
     log_lines.append(f'{invalid_triple_object.DBsubj} {invalid_triple_object.DBprop} {invalid_triple_object.DBobj}')
     if show_log:
       print(invalid_triple_object.DBsubj, invalid_triple_object.DBprop, invalid_triple_object.DBobj)
+  log_lines.append("\n\n#######################################################\n")
 
   assert len(valid_list_triple_objects)+len(invalid_list_triple_objects) == len(list_triple_objects), "Invalid number of triples, you seem to have lost or picked up some on the way"
 
