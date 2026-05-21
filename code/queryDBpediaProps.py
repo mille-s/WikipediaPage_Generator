@@ -9,6 +9,7 @@ import codecs
 import sys
 import pickle
 import requests
+from datetime import datetime
 from colored import Fore, Back, Style
 
 # print('There are '+str(len(list_properties))+' different property labels.')
