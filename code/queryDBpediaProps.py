@@ -132,7 +132,7 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
   invalid_list_triple_object_ids = []
   for index_ts, triple_object in enumerate(list_triple_objects):
     validity = "Invalid"
-    log_lines.append("Checking", triple_object.DBsubj, triple_object.DBprop, triple_object.DBobj)
+    log_lines.append(f"Checking" {triple_object.DBsubj} {triple_object.DBprop} {triple_object.DBobj}')
     if show_log:
       print("Checking", triple_object.DBsubj, f'{Back.yellow}{triple_object.DBprop}{Style.reset}', triple_object.DBobj)
 
