@@ -91,7 +91,7 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
       list_triple_object contains object of class Triple, with 3 attributes: DBsubj, DBprop, DBobj
       list_propObj is a list of properties with their objects used for UI (for triples selection by the user)
       list_obj is a list of just the objects, used for getting class and gender info later on
-      The function returns the same 3 lists, but containing only validated triples if triple_validation is True.
+      The function returns the same 3 lists, but containing only validated triples if filter_out_unvalidated_triples is True.
       """
   XSD_VALIDATORS = {
       "http://www.w3.org/2001/XMLSchema#string": always_valid,
