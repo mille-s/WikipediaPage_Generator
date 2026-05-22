@@ -255,6 +255,21 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
       f.write(line + '\n')
   
   return valid_list_triple_objects, valid_list_propObj, valid_list_obj
+
+def getClassesEntityProperty(subj_name, entity_is_sbjORobj):
+  """
+  Function that gets entity and property classes, either locally if available, or via a query to DBpedia
+  """
+  print(f'Collecting class information for subjects, properties and objects (entity as {entity_is_sbjORobj})...')
+  with open("/content/WikipediaPage_Generator/resources/properties.pickle", "rb") as handle_p, \
+  open("/content/WikipediaPage_Generator/resources/entity_types.pickle", "rb") as handle_e, \
+  open("/content/WikipediaPage_Generator/resources/superclasses.pickle", "rb") as handle_s:
+    dict_properties = pickle.load(handle_p)
+    dict_entity_types = pickle.load(handle_e)
+    dict_superclasses = pickle.load(handle_s)
+    # The classes of the main entity (subj_name) is loaded once at the start - 21/05/2026
+    main_entity_types = get_resource_types(subj_name, dict_entity_types, dict_superclasses)
+    return dict_properties, dict_entity_types, dict_superclasses, main_entity_types
   
 def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_properties_list, dico_map_dbp_wkd = dico_map_dbp_wkd, entity_is_sbjORobj = 'Subj', triple_validation = False):
   # Load dumped version of entity and property classes
@@ -266,17 +281,7 @@ def get_triples_seen(results, subj_name, triple_source, list_properties, ignore_
   dict_superclasses = None
   main_entity_types = None
   if triple_validation == True:
-    # print('Loading offline class information for Wikipedia top 10k entities...')
-    print(f'Collecting class information for subjects, properties and objects (entity as {entity_is_sbjORobj})...')
-    with open("/content/WikipediaPage_Generator/resources/properties.pickle", "rb") as handle_p, \
-    open("/content/WikipediaPage_Generator/resources/entity_types.pickle", "rb") as handle_e, \
-    open("/content/WikipediaPage_Generator/resources/superclasses.pickle", "rb") as handle_s:
-      dict_properties = pickle.load(handle_p)
-      dict_entity_types = pickle.load(handle_e)
-      dict_superclasses = pickle.load(handle_s)
-
-    # The classes of the main entity (subj_name) is loaded once at the start - 21/05/2026
-    main_entity_types = get_resource_types(subj_name, dict_entity_types, dict_superclasses)
+    dict_properties, dict_entity_types, dict_superclasses, main_entity_types = getClassesEntityProperty(subj_name, entity_is_sbjORobj)
 
   # Process and print the results
   list_triple_objects = []
