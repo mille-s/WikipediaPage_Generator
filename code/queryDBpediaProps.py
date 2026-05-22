@@ -86,7 +86,7 @@ def is_integer(text: str) -> bool:
     return text.isdigit()
 
 
-def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show_log=False):
+def filter_unvalidated_triples(list_triple_objects, list_propObj = [], list_obj = [], show_log=False):
   """Takes as input the three lists returned by the get_dbpedia_properties function
       list_triple_object contains object of class Triple, with 3 attributes: DBsubj, DBprop, DBobj
       list_propObj is a list of properties with their objects used for UI (for triples selection by the user)
@@ -222,11 +222,17 @@ def filter_unvalidated_triples(list_triple_objects, list_propObj, list_obj, show
   valid_list_triple_objects = [list_triple_objects[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
   invalid_list_triple_objects = [list_triple_objects[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
 
-  valid_list_propObj = [list_propObj[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
-  invalid_list_propObj = [list_propObj[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
+  valid_list_propObj = []
+  invalid_list_propObj = []
+  if len(list_propObj) > 0:
+    valid_list_propObj = [list_propObj[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
+    invalid_list_propObj = [list_propObj[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
 
-  valid_list_obj = [list_obj[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
-  invalid_list_obj = [list_obj[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
+  valid_list_obj = []
+  invalid_list_obj = []
+  if len(list_obj) > 0:
+    valid_list_obj = [list_obj[triple_object_id] for triple_object_id in valid_list_triple_object_ids]
+    invalid_list_obj = [list_obj[triple_object_id] for triple_object_id in invalid_list_triple_object_ids]
 
   log_lines.append("\nValid triples\n----------------")
   if show_log:
